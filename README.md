@@ -1,0 +1,139 @@
+<p align="center">
+  <a href="#" target="_blank">
+    <img width="320" src="./.github/logo.png">
+  </a>
+</p>
+<br>
+
+Simple, lightweight and flexible schema based form for Vue.js
+
+## Features
+- **Flexible:** Easily to handle from basic to nested forms, group of forms...
+- **Dinamycally:** Generate form components dynamically.
+- **Schema:** Build faster form by schema.
+- **Lightweight:** Small built size. Gzip: ~5 KB
+- **Built-in validation:** Validate form elements with built-in Rules that covers most needs in most web applications
+- **Plugins:** Extend functionally by third-party plugins or your own plugins.
+- **Extensibility:** Easily to make your own custom form element by extending the core elements.
+
+## Links
+- [📚 &nbsp; Documentation](https://vue-formily.netlify.app)
+
+## Installation
+
+### CDN
+You can use **vue-formily** with a script tag and a CDN, import the library like this:
+
+```html
+<script src="https://unpkg.com/@vue-formily/formily@latest"></script>
+```
+
+This will inject a `Formily` global object, which you will use to access the various components, funtions exposed by vue-formily.
+
+If you are using native ES Modules, there is also an ES Modules compatible build:
+
+```html
+<script type="module">
+  import Vue from 'https://unpkg.com/@vue-formily/formily@latest/dist/formily.esm.js'
+</script>
+```
+
+### NPM
+```sh
+# install with yarn
+yarn add @vue-formily/formily
+
+# install with npm
+npm install @vue-formily/formily --save
+```
+
+### Set Up
+
+```typescript
+import Vue from 'vue';
+import VueFormily from '@vue-formily/formily';
+
+Vue.use(VueFormily, {
+  // The default rules want to apply to the form.
+  // With rules that have the `cascade = true`,
+  // then thay can apply to all the child elements.
+  rules: [];
+  // The alias of the object contains all the form references
+  // that will be injected to Vue instance
+  alias: 'forms';
+  // The vue-formily plugins
+  plugins: [];
+  // All your custom form elements
+  elements: [];
+});
+```
+
+## Basic Usage
+Let's start with a simple login form:
+
+### Defining Form Schema
+`vue-formily` need a form schema to work with, so let's define one:
+
+```js
+const loginForm = {
+  formId: 'login',
+  formType: 'group',
+  fields: [
+    {
+      formId: 'email',
+      formType: 'field',
+      label: 'Email',
+      type: 'string',
+      inputType: 'email',
+      rules: {
+        required,
+        email
+      }
+    },
+    {
+      formId: 'password',
+      formType: 'field',
+      label: 'Password',
+      type: 'string',
+      inputType: 'password',
+      rules: {
+        required
+      },
+    }
+  ]
+}
+```
+
+### Create New Form
+Then we call [`$formily.add`](https://vue-formily.netlify.app/api/extension#addform) to create new form element and injects it to Vue instance's `forms` object.
+
+```html
+<template>
+  <form class="login">
+    <div v-for="(field, i) in forms.login.fields" :key="i" class="field">
+      <label :for="field._uid">{{ field.label }}</label>
+      <input v-model="field.raw" :name="field.name" :id="field._uid" />
+    </div>
+  </form>
+</template>
+
+<script>
+export default {
+  created() {
+    // Create new form element and injects it to `forms` object.
+    this.$formily.add(loginForm);
+  }
+}
+</script>
+```
+
+Here is the [live demo](https://vue-formily.netlify.app/getting%20started/basic-usage).
+
+
+## Contributing
+
+You are welcome to contribute to this project, but before you do, please make sure you read the [Contributing Guide](.github/CONTRIBUTING.md).
+
+## License
+
+[MIT](./LICENSE)

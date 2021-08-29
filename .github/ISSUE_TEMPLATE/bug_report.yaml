@@ -1,0 +1,65 @@
+name: 🐞 Bug Report
+description: Report a bug for vue-formily
+title: '<title>'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: 'How do you trigger this bug? Please walk us through it step by step.'
+      value: |
+        1.
+        2.
+        3.
+        ...
+  - type: dropdown
+    id: vue_version
+    attributes:
+      label: Vue.js Version
+      description: Vue.js version
+      options:
+        - 3.x
+        - 2.x
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: vue-formily version
+      options:
+        - 1.x
+    validations:
+      required: true
+  - type: checkboxes
+    id: browsers
+    attributes:
+      label: What browsers are you seeing the problem on?
+      options:
+        - label: Firefox
+        - label: Chrome
+        - label: Safari
+        - label: Microsoft Edge
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: If you have an error log or stacktrack, copy it and paste it here
+      render: shell
+  - type: input
+    id: demo
+    attributes:
+      label: Demo link
+      description: If you can reproduce this issue on codesandbox/codepen, please paste the link here

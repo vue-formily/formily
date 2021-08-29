@@ -1,0 +1,23 @@
+name: 🌵 Feature Request
+description: Request a new feature for vue-formily
+title: '<title>'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your suggestion!
+  - type: textarea
+    id: solve
+    attributes:
+      label: What problem does this feature solve?
+      description: |
+        Explain your use case, context, and rationale behind this feature request. More importantly, what is the end user experience you are trying to build that led to the need for this feature?
+
+        An important design goal of vue-formily is keeping the API surface small and straightforward. In general, we only consider adding new features that solve a problem that cannot be easily dealt with using existing APIs (i.e. not just an alternative way of doing things that can already be done). The problem should also be common enough to justify the addition.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: What does the proposed API look like?
+      description: Describe how you propose to solve the problem and provide code samples of how the API would work once implemented.
