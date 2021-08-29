@@ -8,13 +8,19 @@
 Simple, lightweight and flexible schema based form for Vue.js
 
 ## Features
-- **Flexible:** Easily to handle from basic to nested forms, group of forms...
-- **Dinamycally:** Generate form components dynamically.
-- **Schema:** Build faster form by schema.
-- **Lightweight:** Small built size. Gzip: ~5 KB
-- **Built-in validation:** Validate form elements with built-in Rules that covers most needs in most web applications
-- **Plugins:** Extend functionally by third-party plugins or your own plugins.
-- **Extensibility:** Easily to make your own custom form element by extending the core elements.
+**🧽&nbsp;&nbsp;Flexible:** Easily to handle from basic to nested forms, group of forms...
+
+**⚙️&nbsp;&nbsp;Dynamically:** Generate form components dynamically.
+
+**📝&nbsp;&nbsp;Schema:** Build faster form by schema.
+
+**🐜&nbsp;&nbsp;Lightweight:** Small built size. Gzip: ~5 KB
+
+**✅&nbsp;&nbsp;Validation:** Validate form elements with built-in Rules that covers most needs in most web applications
+
+**🧩&nbsp;&nbsp;Plugins:** Extend functionally by third-party plugins or your own plugins.
+
+**🌵&nbsp;&nbsp;Extensibility:** Easily to make your own custom form element by extending the core elements.
 
 ## Links
 - [📚 &nbsp; Documentation](https://vue-formily.netlify.app)
