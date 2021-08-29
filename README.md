@@ -5,7 +5,7 @@
 </p>
 <br>
 
-Simple, lightweight and flexible schema based form for Vue.js
+Simple, lightweight, and flexible schema-based form for Vue.js
 
 ## Features
 **🧽&nbsp;&nbsp;Flexible:** Easily to handle from basic to nested forms, group of forms...
