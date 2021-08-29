@@ -9,7 +9,7 @@
   "main": "dist/vue-formily.js",
   "types": "dist/vue-formily.d.ts",
   "homepage": "https://vue-formily.netlify.app",
-  "repository": "https://github.com/vue-formily/vue-formily",
+  "repository": "https://github.com/vue-formily/formily",
   "sideEffects": false,
   "keywords": [
     "vue",
