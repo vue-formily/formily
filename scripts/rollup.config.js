@@ -26,6 +26,7 @@ const tsPlugin = typescript({
 });
 
 const package = require(path.resolve(__dirname, `../package.json`));
+const version = process.env.VERSION || package.version;
 
 function createConfig(pkg, format) {
   const config = {
@@ -36,7 +37,7 @@ function createConfig(pkg, format) {
     },
     output: {
       banner: `/**
-  * formily v${package.version}
+  * formily v${version}
   *
   * @link ${package.homepage}
   * @source ${package.repository}
