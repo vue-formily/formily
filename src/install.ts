@@ -4,6 +4,7 @@ import { Field, Group, Collection } from './core/elements';
 import Formily from './Formily';
 import { register } from './helpers';
 import plug from './plug';
+import { readonlyDumpProp } from './utils';
 
 export default function install(Vue: VueConstructor, options: VueFormilyOptions = {}) {
   if (Vue.prototype.$formily) {
@@ -17,17 +18,13 @@ export default function install(Vue: VueConstructor, options: VueFormilyOptions 
   // initialize default form elements
   [Group, Collection, Field, ...elements].forEach(F => register(F, _options));
 
-  const formily = new Formily(_options);
-
-  Vue.prototype.$formily = formily;
-
   Vue.mixin({
-    beforeCreate() {
-      formily.setVm(this);
+    beforeCreate(this: any) {
+      readonlyDumpProp(this, '$formily', new Formily(_options, this));
     },
-    data() {
+    data(this: any) {
       return {
-        [formily.options.alias as string]: {}
+        [this.$formily.options.alias as string]: {}
       };
     }
   });

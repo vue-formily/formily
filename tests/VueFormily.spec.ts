@@ -44,7 +44,7 @@ describe('VueFormily', () => {
       }
     );
 
-    const form = ((wrapper.vm as any).$formily as any).addForm({
+    const form = wrapper.vm.$formily.addForm({
       formId: 'form',
       fields: [
         {
@@ -55,7 +55,7 @@ describe('VueFormily', () => {
     } as FormSchema);
 
     expect(form).toBeInstanceOf(Form);
-    expect('form' in (wrapper.vm as any).forms).toBe(true);
+    expect('form' in wrapper.vm.forms).toBe(true);
   });
 
   it('Can change alias', () => {
@@ -108,7 +108,7 @@ describe('VueFormily', () => {
       }
     );
 
-    const form = ((wrapper.vm as any).$formily as any).addForm({
+    const form = wrapper.vm.$formily.addForm({
       formId: 'form',
       fields: [
         {
@@ -149,7 +149,7 @@ describe('VueFormily', () => {
     );
 
     const vm = wrapper.vm as any;
-    const form = (vm.$formily as any).addForm({
+    const form = vm.$formily.addForm({
       formId: 'form',
       fields: [
         {
@@ -189,7 +189,7 @@ describe('VueFormily', () => {
       }
     );
 
-    const form = ((wrapper.vm as any).$formily as any).addForm({
+    const form = wrapper.vm.$formily.addForm({
       formId: 'form',
       fields: [
         {
@@ -210,5 +210,46 @@ describe('VueFormily', () => {
     await flushPromises();
 
     expect(mockFn).toHaveBeenCalled();
+  });
+
+  test('Scoped `forms` in Vue Components', async () => {
+    localVue.use(VueFormily);
+
+    mount(
+      {
+        created(this: any) {
+          this.$formily.addForm({
+            formId: 'test',
+            fields: []
+          });
+        },
+        mounted(this: any) {
+          expect(this.forms.test2).toBe(undefined);
+          expect(this.forms.test).toBeInstanceOf(Form);
+          expect(this.forms.test.getVm()).toBe(this);
+        },
+        render(h) {
+          return h({
+            created(this: any) {
+              this.$formily.addForm({
+                formId: 'test2',
+                fields: []
+              });
+            },
+            mounted(this: any) {
+              expect(this.forms.test).toBe(undefined);
+              expect(this.forms.test2).toBeInstanceOf(Form);
+              expect(this.forms.test2.getVm()).toBe(this);
+            },
+            render(h: any) {
+              return h('div');
+            }
+          });
+        }
+      },
+      {
+        localVue
+      }
+    );
   });
 });

@@ -11,8 +11,9 @@ export default class Formily {
   options: VueFormilyOptions;
   vm: any;
 
-  constructor(options: VueFormilyOptions = {}) {
+  constructor(options: VueFormilyOptions = {}, vm: any) {
     this.options = merge({}, defaultOptions, options) as VueFormilyOptions;
+    this.vm = vm;
   }
 
   addForm(schema: FormSchema) {
@@ -29,16 +30,12 @@ export default class Formily {
 
     const form = new Form(schema);
 
-    vm.$set(this.vm[options.alias as string], form.formId, form);
+    vm.$set(vm[options.alias as string], form.formId, form);
 
     return form;
   }
 
   removeForm(formId: string) {
     delete this.vm[this.options.alias as string][formId];
-  }
-
-  setVm(vm: any) {
-    this.vm = vm;
   }
 }
