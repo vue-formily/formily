@@ -17,6 +17,7 @@ pnpm-debug.log*
 *.sw?
 
 coverage
+RELEASE_NOTE*.md
 
 # Built files
 /esm/
