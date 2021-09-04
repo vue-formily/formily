@@ -18,7 +18,6 @@ function genElementAncestors(elem: Element): any[] | null {
 
 export default abstract class Element extends Objeto {
   static register() {}
-  static unregister() {}
 
   readonly parent!: Element | null;
   readonly model!: string;
@@ -47,6 +46,10 @@ export default abstract class Element extends Objeto {
     this.addProps(props);
 
     Object.keys(on).map(name => this.on(name, on[name]));
+  }
+
+  get options(): Record<string, any> {
+    return this._d.schema.options || {};
   }
 
   get validation() {
