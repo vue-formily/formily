@@ -13,7 +13,7 @@ import { logMessage, readonlyDumpProp } from '../../utils';
 import Validation from '../validations/Validation';
 
 const FORM_TYPE = 'collection';
-export class CollectionItem extends Group {
+class CollectionItem extends Group {
   get index() {
     const { groups } = this.parent as any;
 

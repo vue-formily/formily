@@ -13,16 +13,6 @@ export function register(F: any, ...args: any[]) {
   F.register(...args);
 }
 
-export function unregister(F: any, ...args: any[]) {
-  const index = _Elements.indexOf(F);
-
-  if (index > -1) {
-    F.unregister(...args);
-
-    _Elements.splice(index, 1);
-  }
-}
-
 export function genFields(fields: any[], ...args: any[]) {
   const length = _Elements.length;
   let invalidSchema: any;
