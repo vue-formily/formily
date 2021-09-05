@@ -67,8 +67,6 @@ Vue.use(VueFormily, {
   // The alias of the object contains all the form references
   // that will be injected to Vue instance
   alias: 'forms';
-  // The vue-formily plugins
-  plugins: [];
   // All your custom form elements
   elements: [];
 });
