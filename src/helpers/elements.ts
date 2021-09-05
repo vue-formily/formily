@@ -47,20 +47,18 @@ export function genFields(fields: any[], ...args: any[]) {
 export function cascadeRules(parentRules: ValidationRuleSchema[], fields: any[]) {
   return parentRules
     ? fields.map(fieldSchema => {
-        const { rules } = fieldSchema;
+        const { rules = [] } = fieldSchema;
 
-        if (rules) {
-          parentRules.forEach(parentRule => {
-            const index = findIndex(rules, (rule: any) => rule.name === parentRule.name);
-            const rule = rules[index];
+        parentRules.forEach(parentRule => {
+          const index = findIndex(rules, (rule: any) => rule.name === parentRule.name);
+          const rule = rules[index];
 
-            if (isFunction(parentRule) || !parentRule.cascade || (rule && rule.inherit === false)) {
-              return;
-            }
+          if (!isFunction(parentRule) && parentRule.cascade && (!rule || rule.inherit !== false)) {
+            rules[index < 0 ? 0 : index] = merge({}, parentRule, rule);
+          }
+        });
 
-            rules[index] = merge({}, parentRule, rule);
-          });
-
+        if (rules.length) {
           fieldSchema.rules = rules;
         }
 

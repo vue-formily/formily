@@ -1,3 +1,4 @@
+import { Rule } from '@/index';
 import { Collection, Field, Group } from '@/core/elements';
 import { FieldSchema, GroupSchema } from '@/core/elements/types';
 import { RuleSchema } from '@/core/validations/types';
@@ -41,6 +42,37 @@ describe('Group', () => {
 
     expect(group).toHaveProperty('a');
     expect(group.a).toBeInstanceOf(Field);
+  });
+
+  it('Can cascade rules', () => {
+    const group = new Group({
+      formId: 'test',
+      rules: [
+        {
+          ...required,
+          cascade: true,
+          message: 'test'
+        }
+      ],
+      fields: [
+        {
+          formId: 'a'
+        },
+        {
+          formId: 'b',
+          rules: [
+            {
+              ...required,
+              inherit: false
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(group.a.validation.required).toBeInstanceOf(Rule);
+    expect(group.a.validation.required.message).toBe('test');
+    expect(group.b.validation.required.message).toBe(null);
   });
 
   it('Can validate', async () => {
