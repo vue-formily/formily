@@ -4,7 +4,13 @@ const file = `./RELEASE_NOTE${version ? `_${version}` : ``}.md`;
 const fileStream = require('fs').createWriteStream(file);
 
 cc({
-  preset: 'angular'
+  preset: 'angular',
+  pkg: {
+    transform(pkg) {
+      pkg.version = `v${version}`;
+      return pkg;
+    }
+  }
 })
   .pipe(fileStream)
   .on('close', () => {
