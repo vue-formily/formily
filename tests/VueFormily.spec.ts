@@ -2,7 +2,6 @@ import { createLocalVue, mount } from '@vue/test-utils';
 import VueFormily from '@/index';
 import { Form } from '@/core/elements';
 import { FormSchema } from '@/core/elements/types';
-import { VueFormilyOptions } from '@/types';
 import flushPromises from 'flush-promises';
 import Objeto from '@/core/Objeto';
 
@@ -76,28 +75,26 @@ describe('VueFormily', () => {
   });
 
   it('Should plug i18n successfully', () => {
-    localVue.use(VueFormily, {
-      plugins: [
-        {
-          install() {
-            Objeto.prototype.$stringFormat = {
-              format(format: any) {
-                return format;
-              }
-            };
+    VueFormily.plug({
+      install() {
+        Objeto.prototype.$stringFormat = {
+          format(format: any) {
+            return format;
           }
-        },
-        {
-          install() {
-            Objeto.prototype.$i18n = {
-              translate(format: any, field: any) {
-                return `${format} ${field.value}`;
-              }
-            };
+        };
+      }
+    });
+    VueFormily.plug({
+      install() {
+        Objeto.prototype.$i18n = {
+          translate(format: any, field: any) {
+            return `${format} ${field.value}`;
           }
-        }
-      ]
-    } as VueFormilyOptions);
+        };
+      }
+    });
+
+    localVue.use(VueFormily);
 
     const wrapper = mount(
       {
@@ -125,19 +122,16 @@ describe('VueFormily', () => {
   });
 
   it('Should plug stringFormat successfully', async () => {
-    localVue.use(VueFormily, {
-      plugins: [
-        {
-          install() {
-            Objeto.prototype.$stringFormat = {
-              format(format: any, field: any) {
-                return `${format} ${field.value}`;
-              }
-            };
+    VueFormily.plug({
+      install() {
+        Objeto.prototype.$stringFormat = {
+          format(format: any, field: any) {
+            return `${format} ${field.value}`;
           }
-        }
-      ]
-    } as VueFormilyOptions);
+        };
+      }
+    });
+    localVue.use(VueFormily);
 
     const wrapper = mount(
       {
@@ -166,19 +160,16 @@ describe('VueFormily', () => {
   });
 
   it('Should plug dateFormat successfully', async () => {
-    localVue.use(VueFormily, {
-      plugins: [
-        {
-          install() {
-            Objeto.prototype.$dateFormat = {
-              format(format: any, field: any) {
-                return `${format} ${field.value.getFullYear()}`;
-              }
-            };
+    VueFormily.plug({
+      install() {
+        Objeto.prototype.$dateFormat = {
+          format(format: any, field: any) {
+            return `${format} ${field.value.getFullYear()}`;
           }
-        }
-      ]
-    } as VueFormilyOptions);
+        };
+      }
+    });
+    localVue.use(VueFormily);
 
     const wrapper = mount(
       {
