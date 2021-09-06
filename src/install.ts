@@ -13,7 +13,7 @@ export default function install(Vue: VueConstructor, options: VueFormilyOptions 
   const { elements = [], ..._options } = options;
 
   // initialize default form elements
-  [Group, Collection, Field, ...elements].forEach(F => register(F, _options));
+  [...elements, Group, Collection, Field].forEach(F => register(F, _options));
 
   Vue.mixin({
     beforeCreate(this: any) {

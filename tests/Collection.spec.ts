@@ -3,7 +3,7 @@ import { GroupSchema } from '@/core/elements/types';
 import { register } from '@/helpers';
 import { required } from './helpers/rules';
 
-[Field, Group, Collection].forEach((F: any) => register(F));
+[Group, Collection, Field].forEach((F: any) => register(F));
 
 describe('Collection', () => {
   const schema: any = { formId: 'collection_test' };

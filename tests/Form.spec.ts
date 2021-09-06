@@ -1,7 +1,7 @@
 import { Form, Field, Group, Collection } from '@/core/elements';
 import { register } from '@/helpers';
 
-[Field, Group, Collection].forEach(F => register(F));
+[Group, Collection, Field].forEach(F => register(F));
 
 describe('Form', () => {
   const form = new Form({

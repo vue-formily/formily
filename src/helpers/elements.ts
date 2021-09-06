@@ -7,7 +7,7 @@ const _Elements: any[] = [];
 
 export function register(F: any, ...args: any[]) {
   if (!_Elements.includes(F)) {
-    _Elements.unshift(F);
+    _Elements.push(F);
   }
 
   F.register(...args);

@@ -6,7 +6,7 @@ import { register } from '@/helpers';
 import flushPromises from 'flush-promises';
 import { required } from './helpers/rules';
 
-[Field, Group, Collection].forEach((F: any) => register(F));
+[Group, Collection, Field].forEach((F: any) => register(F));
 
 describe('Group', () => {
   const schema: any = { formId: 'group_test' };
