@@ -63,7 +63,8 @@ Vue.use(VueFormily, {
   // By default, vue-formily will execute the 
   // validation silently when changing element's value.
   // To disable it, just set the `silent` to `false`.
-  // When disabled, users have to validate the element manually.
+  // When disabled, the element has to be validated manually 
+  // by calling the `element.validate()` method.
   silent?: boolean;
   // The default rules want to apply to the form.
   // With rules that have the `cascade = true`,
