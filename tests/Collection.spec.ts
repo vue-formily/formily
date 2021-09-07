@@ -158,6 +158,7 @@ describe('Collection', () => {
         a: 'abc'
       },
       {
+        a: 'test',
         b: {
           c: 'sss'
         }

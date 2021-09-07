@@ -60,6 +60,11 @@ import Vue from 'vue';
 import VueFormily from '@vue-formily/formily';
 
 Vue.use(VueFormily, {
+  // By default, vue-formily will execute the 
+  // validation silently when changing element's value.
+  // To disable it, just set the `silent` to `false`.
+  // When disabled, users have to validate the element manually.
+  silent?: boolean;
   // The default rules want to apply to the form.
   // With rules that have the `cascade = true`,
   // then thay can apply to all the child elements.
@@ -131,7 +136,7 @@ export default {
 </script>
 ```
 
-Here is the [live demo](https://vue-formily.netlify.app/getting%20started/basic-usage).
+Here is the [live demo](https://vue-formily.netlify.app/getting%20started/basic-usage#live-demo).
 
 
 ## Contributing

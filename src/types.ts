@@ -1,3 +1,4 @@
+import { ElementOptions } from './core/elements/types';
 import { ValidationRuleSchema } from './core/validations/types';
 
 export type SchemaValidation = {
@@ -6,11 +7,11 @@ export type SchemaValidation = {
   infos?: Record<string, string>;
 };
 
-export interface VueFormilyOptions {
+export type VueFormilyOptions = ElementOptions & {
   rules?: ValidationRuleSchema[];
   alias?: string;
   elements?: any[];
-}
+};
 
 export interface VueFormilyPlugin {
   install(...args: any[]): any;

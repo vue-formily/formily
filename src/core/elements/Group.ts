@@ -35,7 +35,9 @@ async function onFieldChanged(this: Group, ...args: any[]) {
     value[field.model] = field.value;
   }
 
-  await this.validate({ cascade: false });
+  if (this.options.silent) {
+    await this.validate({ cascade: false });
+  }
 
   this.emit('changed', this, ...args);
 }

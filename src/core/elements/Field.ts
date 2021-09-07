@@ -118,11 +118,7 @@ export default class Field extends Element {
 
     this.setCheckedValue(schema.checkedValue);
 
-    if (!isUndefined(value)) {
-      this.setValue(value);
-    } else {
-      data.raw = '';
-    }
+    this.setValue(value);
   }
 
   get pending() {
@@ -155,12 +151,17 @@ export default class Field extends Element {
 
   async setValue(value: any) {
     const _d = this._d;
-    const curRaw = _d.raw;
-    const raw = (_d.raw = toString(value));
+    const curRaw = _d.raw || '';
+
+    _d.raw = !isUndefined(value) ? toString(value) : curRaw;
+
+    const raw = _d.raw;
+
+    if (this.options.silent) {
+      await this.validate();
+    }
 
     if (raw !== curRaw) {
-      await this.validate();
-
       this.emit('changed', this, curRaw, raw);
     }
 

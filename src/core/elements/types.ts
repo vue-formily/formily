@@ -2,18 +2,23 @@ import { EventHandler } from '../Evento';
 import Validation from '../validations/Validation';
 import { ValidationRuleSchema } from '../validations/types';
 
+export type ElementOptions = {
+  silent?: boolean;
+};
+
 export interface ElementSchema {
   formId?: string;
   model?: string;
   props?: Record<string, any>;
   on?: Record<string, EventHandler>;
-  options?: Record<string, any>;
+  options?: ElementOptions;
 }
 
 export interface ElementData {
   ancestors: any[] | null;
   schema: any;
   validation: Validation;
+  options: ElementOptions;
 }
 
 export interface GroupSchema extends ElementSchema {

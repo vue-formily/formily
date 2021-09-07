@@ -49,7 +49,9 @@ async function onGroupChanged(this: Collection, ...args: any[]) {
 async function onCollectionChanged(this: Collection, ...args: any[]) {
   this._d.pending = true;
 
-  await this.validate({ cascade: false });
+  if (this.options.silent) {
+    await this.validate({ cascade: false });
+  }
 
   this.emit('changed', this, ...args);
 }

@@ -117,7 +117,6 @@ describe('Field', () => {
   it('Can be shaked', async () => {
     const f = new Field({
       formId: 'field_name',
-      value: '',
       rules: [
         {
           name: 'test',
@@ -136,6 +135,20 @@ describe('Field', () => {
     f.shake();
 
     expect(f.error).toBe('test message');
+  });
+
+  it('Can turn off silent', async () => {
+    const f = new Field({
+      formId: 'field_name',
+      options: {
+        silent: false
+      },
+      rules: [required]
+    });
+
+    await flushPromises();
+
+    expect(f.valid).toBe(true);
   });
 
   it('Can reset', async () => {

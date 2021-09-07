@@ -4,6 +4,7 @@ import { Form } from '@/core/elements';
 import { FormSchema } from '@/core/elements/types';
 import flushPromises from 'flush-promises';
 import Objeto from '@/core/Objeto';
+import { required } from './helpers/rules';
 
 describe('VueFormily', () => {
   let localVue: any;
@@ -74,6 +75,36 @@ describe('VueFormily', () => {
     expect('myForms' in wrapper.vm).toBe(true);
   });
 
+  it('Can turn off silent', async () => {
+    localVue.use(VueFormily, {
+      silent: false
+    });
+
+    const wrapper = mount(
+      {
+        template: '<div></div>'
+      },
+      {
+        localVue
+      }
+    );
+
+    const form = wrapper.vm.$formily.addForm({
+      formId: 'form',
+      fields: [
+        {
+          formId: 'a',
+          format: 'test',
+          rules: [required]
+        }
+      ]
+    } as FormSchema);
+
+    await flushPromises();
+
+    expect(form.valid).toBe(true);
+  });
+
   it('Should plug i18n successfully', () => {
     VueFormily.plug({
       install() {
@@ -94,7 +125,9 @@ describe('VueFormily', () => {
       }
     });
 
-    localVue.use(VueFormily);
+    localVue.use(VueFormily, {
+      silent: true
+    });
 
     const wrapper = mount(
       {

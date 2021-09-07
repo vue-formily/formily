@@ -1,7 +1,8 @@
-import { ElementData, ElementSchema } from './types';
+import { ElementData, ElementOptions, ElementSchema } from './types';
 import { genHtmlName, getProp, genProps } from '../../helpers';
 import { dumpProp, readonlyDumpProp } from '../../utils';
 import Objeto from '../Objeto';
+import { merge } from '@vue-formily/util';
 
 function genElementAncestors(elem: Element): any[] | null {
   const path = [];
@@ -16,8 +17,14 @@ function genElementAncestors(elem: Element): any[] | null {
   return path.length ? path : null;
 }
 
+let _options = {
+  silent: true
+} as ElementOptions;
+
 export default abstract class Element extends Objeto {
-  static register() {}
+  static register(options: ElementOptions) {
+    _options = merge(_options, options);
+  }
 
   readonly parent!: Element | null;
   readonly model!: string;
@@ -36,20 +43,21 @@ export default abstract class Element extends Objeto {
 
     readonlyDumpProp(data, 'schema', schema);
 
-    const { model, props = {}, on = {} } = schema;
+    const { model, props = {}, on = {}, options } = schema;
 
     readonlyDumpProp(this, 'parent', parent || null);
     readonlyDumpProp(this, 'model', model || this.formId);
 
     dumpProp(data, 'ancestors', genElementAncestors(this));
+    dumpProp(data, 'options', merge({}, _options, options));
 
     this.addProps(props);
 
     Object.keys(on).map(name => this.on(name, on[name]));
   }
 
-  get options(): Record<string, any> {
-    return this._d.schema.options || {};
+  get options(): ElementOptions {
+    return this._d.options;
   }
 
   get validation() {
