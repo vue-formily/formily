@@ -11,7 +11,7 @@ const formatNameMap = {
 };
 
 const pkgNameMap = {
-  formily: 'VueFormily'
+  formily: 'formily'
 };
 
 const formatMap = {

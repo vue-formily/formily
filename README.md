@@ -34,7 +34,7 @@ You can use **vue-formily** with a script tag and a CDN, import the library like
 <script src="https://unpkg.com/@vue-formily/formily@latest"></script>
 ```
 
-This will inject a `Formily` global object, which you will use to access the various components, funtions exposed by vue-formily.
+This will inject a `VueFormily` global object, which you will use to access the various components, funtions exposed by **vue-formily**.
 
 If you are using native ES Modules, there is also an ES Modules compatible build:
 
