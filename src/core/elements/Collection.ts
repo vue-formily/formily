@@ -186,7 +186,7 @@ export default class Collection extends Element {
   }
 
   removeGroup(itemOrIndex: CollectionItem | number) {
-    const index = (itemOrIndex as CollectionItem).index || (itemOrIndex as number);
+    const index = itemOrIndex instanceof CollectionItem ? itemOrIndex.index : itemOrIndex;
     const group = this.groups && this.groups[index];
 
     if (group) {

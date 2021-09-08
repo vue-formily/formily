@@ -57,13 +57,21 @@ describe('Collection', () => {
   it('Can remove group', async () => {
     const collection = new Collection(schema);
 
-    const group = collection.addGroup();
+    let group = collection.addGroup();
 
     await group.setValue({
       a: 'test'
     });
 
     collection.removeGroup(0);
+
+    group = collection.addGroup();
+
+    await group.setValue({
+      a: 'test'
+    });
+
+    collection.removeGroup(group);
 
     collection.on('validated', () => {
       expect(collection.groups?.length).toBe(0);
