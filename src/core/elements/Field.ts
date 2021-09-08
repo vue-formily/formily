@@ -83,7 +83,6 @@ export default class Field extends Element {
 
   readonly formType!: string;
   readonly type!: FieldType;
-  readonly inputType!: string;
   readonly default!: any;
 
   protected _d!: FieldData;
@@ -97,11 +96,10 @@ export default class Field extends Element {
       throw new Error(logMessage(`[Schema error] ${accepted.reason}`, accepted.infos));
     }
 
-    const { type, rules, inputType = 'text', default: defu } = schema;
+    const { type, rules, default: defu } = schema;
 
     readonlyDumpProp(this, 'formType', FORM_TYPE);
     readonlyDumpProp(this, 'type', type || 'string');
-    readonlyDumpProp(this, 'inputType', inputType);
 
     this._d.validation = new Validation(normalizeRules(rules, this.type));
 

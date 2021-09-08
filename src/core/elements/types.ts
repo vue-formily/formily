@@ -40,7 +40,6 @@ export type Format = string | ((field: any) => string);
 
 export interface FieldSchema extends ElementSchema {
   type?: FieldType;
-  inputType?: string;
   format?: Format;
   default?: any;
   value?: any;

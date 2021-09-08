@@ -86,32 +86,42 @@ Let's start with a simple login form:
 
 ```js
 const loginForm = {
-  formId: 'login',
-  formType: 'group',
+  formId: "login",
   fields: [
     {
-      formId: 'email',
-      formType: 'field',
-      label: 'Email',
-      type: 'string',
-      inputType: 'email',
-      rules: {
-        required,
-        email
-      }
+      formId: "email",
+      type: "string",
+      rules: [
+        {
+          ...required,
+          message: "Please enter email address.",
+        },
+        {
+          ...email,
+          message: "Please enter valid email address.",
+        },
+      ],
+      props: {
+        label: "email",
+        inputType: "email"
+      },
     },
     {
-      formId: 'password',
-      formType: 'field',
-      label: 'Password',
-      type: 'string',
-      inputType: 'password',
-      rules: {
-        required
+      formId: "password",
+      type: "string",
+      rules: [
+        {
+          ...required,
+          message: "Please enter password.",
+        },
+      ],
+      props: {
+        label: "password",
+        inputType: "password"
       },
-    }
-  ]
-}
+    },
+  ],
+};
 ```
 
 ### Create New Form
@@ -122,7 +132,7 @@ Then we call [`$formily.add`](https://vue-formily.netlify.app/api/extension#addf
   <form class="login">
     <div v-for="(field, i) in forms.login.fields" :key="i" class="field">
       <label :for="field._uid">{{ field.label }}</label>
-      <input v-model="field.raw" :name="field.name" :id="field._uid" />
+      <input v-model="field.raw" :type="field.props.inputType" :name="field.name" :id="field._uid" />
     </div>
   </form>
 </template>
