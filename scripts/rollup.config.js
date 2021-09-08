@@ -7,11 +7,11 @@ const dirMap = {
 };
 
 const formatNameMap = {
-  formily: 'Formily'
+  formily: 'VueFormily'
 };
 
 const pkgNameMap = {
-  formily: 'formily'
+  formily: 'VueFormily'
 };
 
 const formatMap = {
