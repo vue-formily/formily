@@ -34,11 +34,11 @@ const casts: Record<string, (value: any, ...args: any[]) => FieldValue> = {
 };
 
 function formatter(this: Field): string {
-  const { type, _d: data } = this;
+  const { type, _d: data, plugs = {} } = this;
   const { format } = data.schema;
-  const FORMATER = `$${type}Format`;
-  const formatter = this[FORMATER];
-  const translater = this.$i18n;
+  const FORMATER = `${type}Format`;
+  const formatter = (plugs as any)[FORMATER];
+  const translater = (plugs as any).i18n;
   let result = null;
 
   if (format && formatter) {

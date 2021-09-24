@@ -78,6 +78,16 @@ Vue.use(VueFormily, {
 });
 ```
 
+### Vue Version Support
+
+The main v2 version supports Vue 3.x only, for previous versions of Vue, check the following the table
+
+| Vue Version | vue-formily version |
+| ----------- | ------------------- |
+| `2.x`       | `1.x` |
+| `3.x`       | `2.x` |
+
+
 ## Basic Usage
 Let's start with a simple login form:
 

@@ -1,32 +1,23 @@
-import { Rule } from '@/index';
+import { createFormily, defineSchema, Rule } from '@/index';
 import { Collection, Field, Group } from '@/core/elements';
-import { FieldSchema, GroupSchema } from '@/core/elements/types';
-import { RuleSchema } from '@/core/validations/types';
-import { register } from '@/helpers';
 import flushPromises from 'flush-promises';
 import { required } from './helpers/rules';
+import { GroupInstance } from '@/core/elements/instanceTypes';
 
-[Group, Collection, Field].forEach((F: any) => register(F));
+const formily = createFormily();
+
+[Field, Collection, Group].forEach(F => formily.register(F));
 
 describe('Group', () => {
-  const schema: any = { formId: 'group_test' };
-
-  it('Throw error with undefined `fields`', () => {
-    expect(function () {
-      // eslint-disable-next-line no-new
-      new Group(schema);
-    }).toThrowError('[vue-formily] (formId: "group_test") invalid schema, `fields` must be an array.');
-  });
-
-  it('Can access field from index signature', () => {
-    schema.rules = [
+  const schema = defineSchema({
+    formId: 'group_test',
+    rules: [
       {
         ...required,
         message: 'test'
       }
-    ];
-
-    schema.fields = [
+    ],
+    fields: [
       {
         formId: 'a',
         rules: [
@@ -35,17 +26,26 @@ describe('Group', () => {
             message: 'abc'
           }
         ]
-      } as FieldSchema
-    ];
+      }
+    ]
+  });
 
-    const group = new Group(schema);
+  it('Throw error with undefined `fields`', () => {
+    expect(function () {
+      // eslint-disable-next-line no-new
+      Group.create({ formId: 'group_test' } as any);
+    }).toThrowError('[vue-formily] (formId: "group_test") invalid schema, `fields` must be an array.');
+  });
+
+  it('Can access field from index signature', () => {
+    const group = Group.create(schema);
 
     expect(group).toHaveProperty('a');
     expect(group.a).toBeInstanceOf(Field);
   });
 
-  it('Can cascade rules', () => {
-    const group = new Group({
+  it('Can cascade rules', async () => {
+    const s = defineSchema({
       formId: 'test',
       rules: [
         {
@@ -70,13 +70,19 @@ describe('Group', () => {
       ]
     });
 
+    const group = Group.create(s);
+
+    await flushPromises();
+
+    expect(group.validation.required).toBeInstanceOf(Rule);
     expect(group.a.validation.required).toBeInstanceOf(Rule);
     expect(group.a.validation.required.message).toBe('test');
+    expect(group.b.validation.required.valid).toBe(false);
     expect(group.b.validation.required.message).toBe(null);
   });
 
   it('Can validate', async () => {
-    const group = new Group(schema);
+    const group = Group.create(schema);
 
     await group.validate();
 
@@ -98,7 +104,7 @@ describe('Group', () => {
   });
 
   it('Can shake', async () => {
-    const group = new Group(schema);
+    const group = Group.create(schema);
 
     await group.validate();
 
@@ -120,19 +126,20 @@ describe('Group', () => {
   });
 
   it('Can reset', async () => {
-    schema.fields = [
-      {
-        formId: 'a',
-        rules: [
-          {
-            ...required,
-            message: 'abc'
-          }
-        ]
-      } as FieldSchema
-    ];
-
-    const group = new Group(schema);
+    const group = Group.create({
+      ...schema,
+      fields: [
+        {
+          formId: 'a',
+          rules: [
+            {
+              ...required,
+              message: 'abc'
+            }
+          ]
+        }
+      ]
+    });
 
     expect(group.valid).toBe(true);
 
@@ -154,20 +161,20 @@ describe('Group', () => {
   });
 
   it('Can invalidate', async () => {
-    const group = new Group(schema);
+    const group = Group.create(schema);
 
     group.a.addProps({ test: true });
 
     // set value to pass required rule
     await group.a.setValue('test');
 
-    (group.a as Field).validation.addRule({
+    group.a.validation.addRule({
       name: 'test',
       validator(_a: any, _b: any, field: Field) {
         return field.props.test;
       },
       message: 'invalid field'
-    } as RuleSchema);
+    });
 
     expect(group.valid).toBe(true);
     expect(group.error).toBe(null);
@@ -185,16 +192,24 @@ describe('Group', () => {
   });
 
   it('Can set value', async () => {
-    schema.fields.push({
-      formId: 'b',
+    const s = defineSchema({
+      ...schema,
       fields: [
+        ...schema.fields,
         {
-          formId: 'c'
+          formId: 'b',
+          fields: [
+            {
+              formId: 'c'
+            }
+          ]
         }
       ]
-    } as GroupSchema);
+    });
 
-    const group = new Group(schema);
+    type T = GroupInstance<typeof s>;
+
+    const group = Group.create(s) as T;
 
     expect(group.value).toBe(null);
     await expect(group.setValue('test' as any)).rejects.toThrowError();
@@ -217,7 +232,7 @@ describe('Group', () => {
   });
 
   it('Can clear', async () => {
-    const group = new Group(schema);
+    const group = Group.create(schema);
 
     await group.validate();
 

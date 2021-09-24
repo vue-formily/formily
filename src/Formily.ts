@@ -1,6 +1,6 @@
 import { merge } from '@vue-formily/util';
 import { FormSchema } from './core/elements/types';
-import { VueFormilyOptions } from './types';
+import { ReadonlySchema, VueFormilyConfig, VueFormilyOptions } from './types';
 import Form from './core/elements/Form';
 
 const defaultOptions: VueFormilyOptions = {
@@ -9,33 +9,31 @@ const defaultOptions: VueFormilyOptions = {
 
 export default class Formily {
   options: VueFormilyOptions;
-  vm: any;
+  $root: any;
 
-  constructor(options: VueFormilyOptions = {}, vm: any) {
+  constructor(options: VueFormilyOptions = {}, $root: any) {
     this.options = merge({}, defaultOptions, options) as VueFormilyOptions;
-    this.vm = vm;
+    this.$root = $root;
   }
 
-  addForm(schema: FormSchema) {
-    const { vm, options } = this;
-    const { rules, props = {} } = schema;
+  addForm<F extends ReadonlySchema<FormSchema>>(schema: F) {
+    const { options } = this;
+    const { rules } = schema;
 
-    schema.rules = merge([], options.rules, rules);
+    (schema as any).rules = merge([], options.rules, rules);
 
-    props._formy = {
-      vm: () => this.vm
-    };
+    const form = Form.create<F>(schema);
 
-    schema.props = props;
-
-    const form = new Form(schema);
-
-    vm.$set(vm[options.alias as string], form.formId, form);
+    this.$root[options.alias as string][form.formId] = form;
 
     return form;
   }
 
   removeForm(formId: string) {
-    delete this.vm[this.options.alias as string][formId];
+    delete this.$root[this.options.alias as string][formId];
+  }
+
+  getForm<F>(formId: string): F {
+    return this.$root[this.options.alias as string][formId];
   }
 }

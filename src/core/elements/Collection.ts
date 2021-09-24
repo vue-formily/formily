@@ -1,4 +1,6 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
+import { ReadonlySchema } from '../../types';
+import { CollectionInstance } from './instanceTypes';
 import { CollectionSchema, ElementData } from './types';
 import Element from './Element';
 import Group from './Group';
@@ -13,7 +15,8 @@ import { logMessage, readonlyDumpProp } from '../../utils';
 import Validation from '../validations/Validation';
 
 const FORM_TYPE = 'collection';
-class CollectionItem extends Group {
+
+export class CollectionItem extends Group {
   get index() {
     const { groups } = this.parent as any;
 
@@ -25,7 +28,8 @@ class CollectionItem extends Group {
   }
 }
 
-type CollectionData = ElementData & {
+type CollectionData = Omit<ElementData, 'schema'> & {
+  schema: CollectionSchema;
   value: any[] | null;
   pending: boolean;
 };
@@ -77,8 +81,8 @@ export default class Collection extends Element {
     return sv;
   }
 
-  static create(schema: CollectionSchema, parent?: Element | null): Collection {
-    return new Collection(schema, parent);
+  static create<F extends ReadonlySchema<CollectionSchema>>(schema: F, parent?: Element | null) {
+    return (new Collection((schema as unknown) as CollectionSchema, parent) as unknown) as CollectionInstance<F>;
   }
 
   readonly formType!: string;
@@ -171,7 +175,7 @@ export default class Collection extends Element {
     }
   }
 
-  addGroup(): CollectionItem {
+  addGroup() {
     if (!this.groups) {
       this.groups = [];
     }

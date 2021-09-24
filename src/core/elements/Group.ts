@@ -1,4 +1,6 @@
 import { isPlainObject } from '@vue-formily/util';
+import { GroupInstance } from './instanceTypes';
+import { ReadonlySchema } from '../../types';
 import { ElementData, GroupSchema } from './types';
 
 import {
@@ -62,8 +64,8 @@ export default class Group extends Element {
     return sv;
   }
 
-  static create(schema: GroupSchema, parent?: Element | null): Group {
-    return new Group(schema, parent);
+  static create<F extends ReadonlySchema<GroupSchema>>(schema: F, parent?: Element | null) {
+    return (new Group((schema as unknown) as GroupSchema, parent) as unknown) as GroupInstance<F>;
   }
 
   readonly formType!: string;
@@ -71,8 +73,6 @@ export default class Group extends Element {
   protected _d!: GroupData;
 
   fields: Element[];
-
-  [key: string]: any;
 
   constructor(schema: GroupSchema, parent?: Element | null) {
     super(schema, parent);
@@ -93,7 +93,7 @@ export default class Group extends Element {
     this.fields = genFields(schema.fields, this) as Element[];
 
     this.fields.forEach(field => {
-      this[field.model] = field;
+      (this as any)[field.model] = field;
 
       field.on('changed:formy', (...args: any[]) => onFieldChanged.apply(this, args), { noOff: true });
     });
@@ -118,7 +118,7 @@ export default class Group extends Element {
 
     await Promise.all(
       Object.keys(obj).map(async model => {
-        const field = this[model];
+        const field = (this as any)[model];
 
         if (field) {
           await field.setValue(obj[model]);

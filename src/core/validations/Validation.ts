@@ -12,8 +12,6 @@ type Options = {
 export default class Validation extends Objeto {
   rules: Rule[] = [];
 
-  [key: string]: any;
-
   constructor(rules?: ValitionRuleSchema[]) {
     super();
 
@@ -50,7 +48,7 @@ export default class Validation extends Objeto {
 
   addRule(ruleOrSchema: Rule | ValitionRuleSchema, { from }: Options = {}): Rule {
     const rule = new Rule(ruleOrSchema);
-    const currentRule = this[rule.name];
+    const currentRule = (this as any)[rule.name];
 
     if (currentRule) {
       this.removeRule(currentRule);
@@ -60,7 +58,7 @@ export default class Validation extends Objeto {
 
     this.rules.splice(isNumber(from) && from >= 0 && from <= length ? from : length, 0, rule);
 
-    this[rule.name] = rule;
+    (this as any)[rule.name] = rule;
 
     return rule;
   }

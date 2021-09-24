@@ -1,7 +1,19 @@
 import flushPromises from 'flush-promises';
 import { Field } from '@/core/elements';
 import { numeric, required } from './helpers/rules';
-import Objeto from '@/core/Objeto';
+import { createFormily } from '@/index';
+
+const formily = createFormily();
+
+formily.plug({
+  install(config) {
+    (config.plugs as any).stringFormat = {
+      format(_: any, { value }: any) {
+        return value;
+      }
+    };
+  }
+});
 
 describe('Field', () => {
   it('Can cast', async () => {
@@ -61,12 +73,6 @@ describe('Field', () => {
   });
 
   it('Can format', async () => {
-    Objeto.prototype.$stringFormat = {
-      format(_: any, { value }: any) {
-        return value;
-      }
-    };
-
     const f1 = new Field({
       formId: 'field_name',
       type: 'string',

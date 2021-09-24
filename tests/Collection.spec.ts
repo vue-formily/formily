@@ -1,43 +1,46 @@
+import { createFormily, defineSchema } from '@/index';
 import { Collection, Field, Group } from '@/core/elements';
-import { GroupSchema } from '@/core/elements/types';
-import { register } from '@/helpers';
 import { required } from './helpers/rules';
 
-[Group, Collection, Field].forEach((F: any) => register(F));
+const formily = createFormily();
+
+[Field, Collection, Group].forEach(F => formily.register(F));
 
 describe('Collection', () => {
-  const schema: any = { formId: 'collection_test' };
+  const schema = { formId: 'collection_test' } as const;
 
   it('Throw error with invalid schema', () => {
     expect(function () {
       // eslint-disable-next-line no-new
-      new Collection(schema);
+      Collection.create(schema as any);
     }).toThrowError('[vue-formily] (formId: "collection_test") `group` must be an object');
   });
 
   it('Can add group', async () => {
-    schema.rules = [
-      {
-        ...required,
-        message: 'test'
-      }
-    ];
-
-    schema.group = {
-      fields: [
+    const s = defineSchema({
+      ...schema,
+      rules: [
         {
-          formId: 'a',
-          rules: [
-            {
-              ...required,
-              message: 'abc'
-            }
-          ]
+          ...required,
+          message: 'test'
         }
-      ]
-    };
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
 
-    const collection = new Collection(schema);
+    const collection = Collection.create(s);
 
     expect(collection.groups).toBe(null);
 
@@ -55,7 +58,30 @@ describe('Collection', () => {
   });
 
   it('Can remove group', async () => {
-    const collection = new Collection(schema);
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
 
     let group = collection.addGroup();
 
@@ -82,7 +108,30 @@ describe('Collection', () => {
   });
 
   it('Can validate', async () => {
-    const collection = new Collection(schema);
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
 
     collection.addGroup();
 
@@ -99,7 +148,30 @@ describe('Collection', () => {
   });
 
   it('Can shake', async () => {
-    let collection = new Collection(schema);
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    let collection = Collection.create(s);
 
     collection.addGroup();
 
@@ -111,7 +183,7 @@ describe('Collection', () => {
     expect(collection.error).toBe('test');
     expect((collection.groups as any)[0].a.error).toBe('abc');
 
-    collection = new Collection(schema);
+    collection = Collection.create(s);
 
     collection.addGroup();
 
@@ -125,7 +197,30 @@ describe('Collection', () => {
   });
 
   it('Can reset', async () => {
-    const collection = new Collection(schema);
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
 
     collection.addGroup();
 
@@ -147,16 +242,38 @@ describe('Collection', () => {
   });
 
   it('Can set value', async () => {
-    schema.group.fields.push({
-      formId: 'b',
-      fields: [
+    const s = defineSchema({
+      ...schema,
+      rules: [
         {
-          formId: 'c'
+          ...required,
+          message: 'test'
         }
-      ]
-    } as GroupSchema);
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          },
+          {
+            formId: 'b',
+            fields: [
+              {
+                formId: 'c'
+              }
+            ]
+          }
+        ]
+      }
+    });
 
-    const collection = new Collection(schema);
+    const collection = Collection.create(s);
 
     expect(collection.value).toBe(null);
     await expect(collection.setValue('test' as any)).rejects.toThrowError();
@@ -190,7 +307,38 @@ describe('Collection', () => {
   });
 
   it('Can clear', async () => {
-    const collection = new Collection(schema);
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          },
+          {
+            formId: 'b',
+            fields: [
+              {
+                formId: 'c'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
 
     await collection.validate();
 

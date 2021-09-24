@@ -1,31 +1,21 @@
-import { createLocalVue, mount } from '@vue/test-utils';
-import VueFormily from '@/index';
+import { h } from 'vue';
+import { mount } from '@vue/test-utils';
+import { createFormily, defineSchema } from '@/index';
 import { Form } from '@/core/elements';
-import { FormSchema } from '@/core/elements/types';
 import flushPromises from 'flush-promises';
-import Objeto from '@/core/Objeto';
 import { required } from './helpers/rules';
+import { FormInstance } from '@/core/elements/instanceTypes';
 
 describe('VueFormily', () => {
-  let localVue: any;
-
-  beforeEach(() => {
-    localVue = createLocalVue();
-
-    delete Objeto.prototype.$stringFormat;
-    delete Objeto.prototype.$dateFormat;
-    delete Objeto.prototype.$i18n;
-  });
-
   it('Should install successfully', () => {
-    localVue.use(VueFormily);
-
     const wrapper = mount(
       {
         template: '<div></div>'
       },
       {
-        localVue
+        global: {
+          plugins: [createFormily()]
+        }
       }
     );
 
@@ -33,14 +23,14 @@ describe('VueFormily', () => {
   });
 
   it('Should add form successfully', () => {
-    localVue.use(VueFormily);
-
     const wrapper = mount(
       {
         template: '<div></div>'
       },
       {
-        localVue
+        global: {
+          plugins: [createFormily()]
+        }
       }
     );
 
@@ -52,23 +42,28 @@ describe('VueFormily', () => {
           format: 'test'
         }
       ]
-    } as FormSchema);
+    });
 
     expect(form).toBeInstanceOf(Form);
     expect('form' in wrapper.vm.forms).toBe(true);
   });
 
   it('Can change alias', () => {
-    localVue.use(VueFormily, {
-      alias: 'myForms'
-    });
-
     const wrapper = mount(
       {
         template: '<div></div>'
       },
       {
-        localVue
+        global: {
+          plugins: [
+            [
+              createFormily(),
+              {
+                alias: 'myForms'
+              }
+            ]
+          ]
+        }
       }
     );
 
@@ -76,16 +71,21 @@ describe('VueFormily', () => {
   });
 
   it('Can turn off silent', async () => {
-    localVue.use(VueFormily, {
-      silent: false
-    });
-
     const wrapper = mount(
       {
         template: '<div></div>'
       },
       {
-        localVue
+        global: {
+          plugins: [
+            [
+              createFormily(),
+              {
+                silent: false
+              }
+            ]
+          ]
+        }
       }
     );
 
@@ -98,7 +98,7 @@ describe('VueFormily', () => {
           rules: [required]
         }
       ]
-    } as FormSchema);
+    });
 
     await flushPromises();
 
@@ -106,18 +106,20 @@ describe('VueFormily', () => {
   });
 
   it('Should plug i18n successfully', () => {
-    VueFormily.plug({
-      install() {
-        Objeto.prototype.$stringFormat = {
+    const formily = createFormily();
+
+    formily.plug({
+      install(config) {
+        (config.plugs as any).stringFormat = {
           format(format: any) {
             return format;
           }
         };
       }
     });
-    VueFormily.plug({
-      install() {
-        Objeto.prototype.$i18n = {
+    formily.plug({
+      install(config) {
+        (config.plugs as any).i18n = {
           translate(format: any, field: any) {
             return `${format} ${field.value}`;
           }
@@ -125,16 +127,21 @@ describe('VueFormily', () => {
       }
     });
 
-    localVue.use(VueFormily, {
-      silent: true
-    });
-
     const wrapper = mount(
       {
         template: '<div></div>'
       },
       {
-        localVue
+        global: {
+          plugins: [
+            [
+              formily,
+              {
+                silent: true
+              }
+            ]
+          ]
+        }
       }
     );
 
@@ -147,7 +154,7 @@ describe('VueFormily', () => {
           format: 'format'
         }
       ]
-    } as FormSchema);
+    });
 
     form.on('validated', () => {
       expect(form.a.formatted).toBe('format test');
@@ -155,28 +162,30 @@ describe('VueFormily', () => {
   });
 
   it('Should plug stringFormat successfully', async () => {
-    VueFormily.plug({
-      install() {
-        Objeto.prototype.$stringFormat = {
+    const formily = createFormily();
+
+    formily.plug({
+      install(config) {
+        (config.plugs as any).stringFormat = {
           format(format: any, field: any) {
             return `${format} ${field.value}`;
           }
         };
       }
     });
-    localVue.use(VueFormily);
 
     const wrapper = mount(
       {
         template: '<div></div>'
       },
       {
-        localVue
+        global: {
+          plugins: [formily]
+        }
       }
     );
 
-    const vm = wrapper.vm as any;
-    const form = vm.$formily.addForm({
+    const form = wrapper.vm.$formily.addForm({
       formId: 'form',
       fields: [
         {
@@ -185,7 +194,7 @@ describe('VueFormily', () => {
           value: 'test'
         }
       ]
-    } as FormSchema);
+    });
 
     form.on('validated', () => {
       expect(form.a.formatted).toBe('format test');
@@ -193,23 +202,26 @@ describe('VueFormily', () => {
   });
 
   it('Should plug dateFormat successfully', async () => {
-    VueFormily.plug({
-      install() {
-        Objeto.prototype.$dateFormat = {
+    const formily = createFormily();
+
+    formily.plug({
+      install(config) {
+        (config.plugs as any).dateFormat = {
           format(format: any, field: any) {
             return `${format} ${field.value.getFullYear()}`;
           }
         };
       }
     });
-    localVue.use(VueFormily);
 
     const wrapper = mount(
       {
         template: '<div></div>'
       },
       {
-        localVue
+        global: {
+          plugins: [formily]
+        }
       }
     );
 
@@ -223,7 +235,7 @@ describe('VueFormily', () => {
           type: 'date'
         }
       ]
-    } as FormSchema);
+    });
 
     const mockFn = jest.fn(() => {
       expect(form.a.formatted).toBe('format 2021');
@@ -237,8 +249,6 @@ describe('VueFormily', () => {
   });
 
   test('Scoped `forms` in Vue Components', async () => {
-    localVue.use(VueFormily);
-
     mount(
       {
         created(this: any) {
@@ -248,11 +258,10 @@ describe('VueFormily', () => {
           });
         },
         mounted(this: any) {
-          expect(this.forms.test2).toBe(undefined);
+          expect(this.forms.test2).toBeInstanceOf(Form);
           expect(this.forms.test).toBeInstanceOf(Form);
-          expect(this.forms.test.getVm()).toBe(this);
         },
-        render(h) {
+        render() {
           return h({
             created(this: any) {
               this.$formily.addForm({
@@ -261,19 +270,88 @@ describe('VueFormily', () => {
               });
             },
             mounted(this: any) {
-              expect(this.forms.test).toBe(undefined);
+              expect(this.forms.test).toBeInstanceOf(Form);
               expect(this.forms.test2).toBeInstanceOf(Form);
-              expect(this.forms.test2.getVm()).toBe(this);
             },
-            render(h: any) {
+            render() {
               return h('div');
             }
           });
         }
       },
       {
-        localVue
+        global: {
+          plugins: [createFormily()]
+        }
       }
     );
+  });
+
+  test('Reactivity', async () => {
+    const schema = defineSchema({
+      formId: 'test',
+      fields: [
+        {
+          formId: 'field',
+          formType: 'field',
+          props: {
+            test(this: any, field: any) {
+              return `hi, ${field.value}`;
+            }
+          },
+          value: 0
+        },
+        {
+          formId: 'group',
+          fields: [
+            {
+              formId: 'field',
+              value: 0,
+              dasdas: 'saddas'
+            }
+          ]
+        }
+      ]
+    });
+
+    type TestForm = FormInstance<typeof schema>;
+
+    const wrapper = mount(
+      {
+        name: 'test',
+        created() {
+          this.$formily.addForm(schema);
+        },
+        render() {
+          const form = this.$formily.getForm<TestForm>('test');
+
+          return h(
+            'div',
+            {
+              id: 'test'
+            },
+            [form.field.props.test, ' - ', form.group.value ? form.group.value.field : '']
+          );
+        }
+      },
+      {
+        global: {
+          plugins: [createFormily()]
+        }
+      }
+    );
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 0 - 0');
+
+    const test = (wrapper.vm.forms.test as unknown) as TestForm;
+
+    test.field.raw = 1;
+    test.group.field.raw = 1;
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - 1');
   });
 });

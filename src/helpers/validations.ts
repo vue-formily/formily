@@ -2,7 +2,7 @@ import { isFunction } from '@vue-formily/util';
 import { ValidationRuleSchema } from '../core/validations/types';
 import { SchemaValidation } from '../types';
 
-export function normalizeRules(rules: ValidationRuleSchema[] = [], type: string | null = null): ValidationRuleSchema[] {
+export function normalizeRules(rules: ValidationRuleSchema[] = [], type: string | null = null) {
   const _rules: ValidationRuleSchema[] = [];
 
   rules.forEach((rule: ValidationRuleSchema) => {
@@ -14,7 +14,7 @@ export function normalizeRules(rules: ValidationRuleSchema[] = [], type: string 
     }
   });
 
-  return _rules;
+  return _rules as ValidationRuleSchema[];
 }
 
 export function invalidateSchemaValidation(sv: SchemaValidation, reason?: string, infos?: Record<string, string>) {
