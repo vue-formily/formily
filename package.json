@@ -1,6 +1,6 @@
 {
   "name": "@vue-formily/formily",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "description": "Simple, lightweight, and flexible schema-based form for Vue.js",
   "author": "An Ha",
   "license": "MIT",
