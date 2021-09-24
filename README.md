@@ -56,10 +56,14 @@ npm install @vue-formily/formily --save
 ### Set Up
 
 ```typescript
-import Vue from 'vue';
-import VueFormily from '@vue-formily/formily';
+import { createApp } from 'vue'
+mport { createFormily } from '@vue-formily/formily';
 
-Vue.use(VueFormily, {
+const formily = createFormily();
+
+const app = createApp(App)
+
+app.use(formily, {
   // By default, vue-formily will execute the 
   // validation silently when changing element's value.
   // To disable it, just set the `silent` to `false`.
@@ -73,8 +77,6 @@ Vue.use(VueFormily, {
   // The alias of the object contains all the form references
   // that will be injected to Vue instance
   alias: 'forms';
-  // All your custom form elements
-  elements: [];
 });
 ```
 

@@ -1,7 +1,7 @@
 import { App } from 'vue';
 import { Field, Group, Collection, Form } from './core/elements';
-import { VueFormilyConfig, VueFormilyOptions, VueFormilyPlugin } from './types';
-import Formily from './Formily';
+import { VueFormilyConfig, VueFormilyPlugin } from './types';
+import Formily, { VueFormilyOptions } from './Formily';
 import Objeto from './core/Objeto';
 import { def } from './utils';
 

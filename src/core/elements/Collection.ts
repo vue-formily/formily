@@ -1,7 +1,6 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
-import { ReadonlySchema } from '../../types';
 import { CollectionInstance } from './instanceTypes';
-import { CollectionSchema, ElementData } from './types';
+import { CollectionSchema, ElementData, ReadonlySchema } from './types';
 import Element from './Element';
 import Group from './Group';
 import {

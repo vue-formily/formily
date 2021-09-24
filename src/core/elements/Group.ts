@@ -1,7 +1,6 @@
 import { isPlainObject } from '@vue-formily/util';
 import { GroupInstance } from './instanceTypes';
-import { ReadonlySchema } from '../../types';
-import { ElementData, GroupSchema } from './types';
+import { ElementData, GroupSchema, ReadonlySchema } from './types';
 
 import {
   cascadeRules,

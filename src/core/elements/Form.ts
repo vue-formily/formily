@@ -1,6 +1,5 @@
-import { ReadonlySchema } from '../../types';
 import { FormInstance } from './instanceTypes';
-import { FormSchema } from './types';
+import { FormSchema, ReadonlySchema } from './types';
 import Group from './Group';
 
 export default class Form extends Group {

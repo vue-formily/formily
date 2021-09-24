@@ -1,6 +1,7 @@
 import { EventHandler } from '../Evento';
 import Validation from '../validations/Validation';
 import { ValidationRuleSchema } from '../validations/types';
+import { Builtin } from '../../utils-types';
 
 export type ElementOptions = {
   silent?: boolean;
@@ -48,3 +49,11 @@ export interface FieldSchema<I = string> extends ElementSchema<I> {
   value?: any;
   checkedValue?: any;
 }
+
+export type ReadonlySchema<T> = T extends Builtin
+  ? T
+  : T extends Array<any>
+  ? Readonly<T>
+  : T extends Record<string, any>
+  ? { readonly [K in keyof T]: ReadonlySchema<T[K]> }
+  : Readonly<T>;

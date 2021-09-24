@@ -1,7 +1,8 @@
 import { Rule, Validation } from '../validations';
-import { UnionToIntersection } from '../../types';
 import { ElementOptions, FieldSchema } from './types';
 import Evento from '../Evento';
+import { UnionToIntersection } from '../../utils-types';
+import { Plugs } from '../plugs';
 
 export type ElementInstance = {
   readonly parent: ElementInstance | null;
@@ -25,7 +26,7 @@ export type ElementInstance = {
   getHtmlName(): string;
   shake(): void;
   cleanUp(): void;
-} & Evento;
+} & { plugs: Plugs } & Evento;
 
 export type CustomValidationProperty<R> = R extends Record<string, any>
   ? {

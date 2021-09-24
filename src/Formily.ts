@@ -1,10 +1,15 @@
 import { merge } from '@vue-formily/util';
-import { FormSchema } from './core/elements/types';
-import { ReadonlySchema, VueFormilyConfig, VueFormilyOptions } from './types';
+import { ElementOptions, FormSchema, ReadonlySchema } from './core/elements/types';
+import { ValidationRuleSchema } from './core/validations/types';
 import Form from './core/elements/Form';
 
 const defaultOptions: VueFormilyOptions = {
   alias: 'forms'
+};
+
+export type VueFormilyOptions = ElementOptions & {
+  rules?: ValidationRuleSchema[];
+  alias?: string;
 };
 
 export default class Formily {

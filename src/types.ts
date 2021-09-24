@@ -1,5 +1,6 @@
-import { ElementOptions } from './core/elements/types';
-import { ValidationRuleSchema } from './core/validations/types';
+import { FormInstance } from './core/elements/instanceTypes';
+import { Plugs } from './core/plugs';
+import Formily from './Formily';
 
 export type VueFormilyConfig = {
   plugs: Plugs;
@@ -12,30 +13,15 @@ export type SchemaValidation = {
   infos?: Record<string, string>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface Plugs {}
-
 export interface VueFormilyPlugin {
   install(config: VueFormilyConfig, ...args: any[]): any;
 }
 
-export type VueFormilyOptions = ElementOptions & {
-  rules?: ValidationRuleSchema[];
-  alias?: string;
-};
-
 export type Localizer = (value: string, props?: Record<string, any>, data?: Record<string, any>) => string;
 
-export type Primitive = string | number | boolean | bigint | symbol | undefined | null;
-
-export type Builtin = Primitive | FunctionConstructor | Date | Error | RegExp;
-
-export type ReadonlySchema<T> = T extends Builtin
-  ? T
-  : T extends Array<any>
-  ? Readonly<T>
-  : T extends Record<string, any>
-  ? { readonly [K in keyof T]: ReadonlySchema<T[K]> }
-  : Readonly<T>;
-
-export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+declare module '@vue/runtime-core' {
+  export interface ComponentCustomProperties {
+    $formily: Formily;
+    forms: Record<string, FormInstance>;
+  }
+}
