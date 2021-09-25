@@ -1,6 +1,5 @@
 import { isPlainObject } from '@vue-formily/util';
-import { GroupInstance } from './instanceTypes';
-import { ElementData, GroupSchema, ReadonlySchema } from './types';
+import { ElementData, GroupSchema } from './types';
 
 import {
   cascadeRules,
@@ -63,8 +62,8 @@ export default class Group extends Element {
     return sv;
   }
 
-  static create<F extends ReadonlySchema<GroupSchema>>(schema: F, parent?: Element | null) {
-    return (new Group((schema as unknown) as GroupSchema, parent) as unknown) as GroupInstance<F>;
+  static create(schema: GroupSchema, parent?: Element | null) {
+    return new Group(schema, parent);
   }
 
   readonly formType!: string;

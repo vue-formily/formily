@@ -45,7 +45,7 @@ describe('Form', () => {
 
   type TestForm = FormInstance<typeof schema>;
 
-  const form = Form.create(schema) as TestForm;
+  const form = (Form.create(schema) as unknown) as TestForm;
 
   it('Field has correct name', () => {
     expect(form.a.htmlName).toBe('form[a]');

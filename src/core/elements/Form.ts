@@ -1,9 +1,3 @@
-import { FormInstance } from './instanceTypes';
-import { FormSchema, ReadonlySchema } from './types';
 import Group from './Group';
 
-export default class Form extends Group {
-  static create<F extends ReadonlySchema<FormSchema>>(schema: F) {
-    return (new Form((schema as unknown) as FormSchema) as unknown) as FormInstance<F>;
-  }
-}
+export default class Form extends Group {}

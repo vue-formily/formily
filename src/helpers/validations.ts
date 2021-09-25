@@ -1,6 +1,11 @@
 import { isFunction } from '@vue-formily/util';
 import { ValidationRuleSchema } from '../core/validations/types';
-import { SchemaValidation } from '../types';
+
+export type SchemaValidation = {
+  valid: boolean;
+  reason?: string;
+  infos?: Record<string, string>;
+};
 
 export function normalizeRules(rules: ValidationRuleSchema[] = [], type: string | null = null) {
   const _rules: ValidationRuleSchema[] = [];

@@ -1,9 +1,17 @@
 import { App } from 'vue';
 import { Field, Group, Collection, Form } from './core/elements';
 import { VueFormilyConfig, VueFormilyPlugin } from './types';
+import { FormInstance } from './core/elements/instanceTypes';
 import Formily, { VueFormilyOptions } from './Formily';
 import Objeto from './core/Objeto';
 import { def } from './utils';
+
+declare module '@vue/runtime-core' {
+  export interface ComponentCustomProperties {
+    $formily: Formily;
+    forms: Record<string, FormInstance>;
+  }
+}
 
 const _configs = new WeakMap();
 
@@ -65,6 +73,11 @@ function createFormily() {
 const VueFormily = {
   createFormily
 };
+
+export * from './types';
+export * from './core/elements/types';
+export * from './core/elements/instanceTypes';
+export * from './core/validations/types';
 
 export * from './core/validations';
 export { Field, Group, Collection, Form, Objeto };

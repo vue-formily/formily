@@ -55,6 +55,7 @@ npm install @vue-formily/formily --save
 
 ### Set Up
 
+### Vue 3.x
 ```typescript
 import { createApp } from 'vue'
 mport { createFormily } from '@vue-formily/formily';
@@ -64,6 +65,28 @@ const formily = createFormily();
 const app = createApp(App)
 
 app.use(formily, {
+  // By default, vue-formily will execute the 
+  // validation silently when changing element's value.
+  // To disable it, just set the `silent` to `false`.
+  // When disabled, the element has to be validated manually 
+  // by calling the `element.validate()` method.
+  silent?: boolean;
+  // The default rules want to apply to the form.
+  // With rules that have the `cascade = true`,
+  // then thay can apply to all the child elements.
+  rules: [];
+  // The alias of the object contains all the form references
+  // that will be injected to Vue instance
+  alias: 'forms';
+});
+```
+
+#### Vue 2.x
+```typescript
+import Vue from 'vue';
+import VueFormily from '@vue-formily/formily';
+
+Vue.use(VueFormily, {
   // By default, vue-formily will execute the 
   // validation silently when changing element's value.
   // To disable it, just set the `silent` to `false`.

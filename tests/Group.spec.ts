@@ -1,4 +1,4 @@
-import { createFormily, defineSchema, Rule } from '@/index';
+import { createFormily, defineSchema, GroupSchema, ReadonlySchema, Rule } from '@/index';
 import { Collection, Field, Group } from '@/core/elements';
 import flushPromises from 'flush-promises';
 import { required } from './helpers/rules';
@@ -7,6 +7,10 @@ import { GroupInstance } from '@/core/elements/instanceTypes';
 const formily = createFormily();
 
 [Field, Collection, Group].forEach(F => formily.register(F));
+
+function createGroup<F extends ReadonlySchema<GroupSchema>>(schema: F) {
+  return (new Group((schema as unknown) as GroupSchema) as unknown) as GroupInstance<F>;
+}
 
 describe('Group', () => {
   const schema = defineSchema({
@@ -33,12 +37,12 @@ describe('Group', () => {
   it('Throw error with undefined `fields`', () => {
     expect(function () {
       // eslint-disable-next-line no-new
-      Group.create({ formId: 'group_test' } as any);
+      createGroup({ formId: 'group_test' } as any);
     }).toThrowError('[vue-formily] (formId: "group_test") invalid schema, `fields` must be an array.');
   });
 
   it('Can access field from index signature', () => {
-    const group = Group.create(schema);
+    const group = createGroup(schema);
 
     expect(group).toHaveProperty('a');
     expect(group.a).toBeInstanceOf(Field);
@@ -70,7 +74,7 @@ describe('Group', () => {
       ]
     });
 
-    const group = Group.create(s);
+    const group = createGroup(s);
 
     await flushPromises();
 
@@ -82,7 +86,7 @@ describe('Group', () => {
   });
 
   it('Can validate', async () => {
-    const group = Group.create(schema);
+    const group = createGroup(schema);
 
     await group.validate();
 
@@ -104,7 +108,7 @@ describe('Group', () => {
   });
 
   it('Can shake', async () => {
-    const group = Group.create(schema);
+    const group = createGroup(schema);
 
     await group.validate();
 
@@ -126,7 +130,7 @@ describe('Group', () => {
   });
 
   it('Can reset', async () => {
-    const group = Group.create({
+    const group = createGroup({
       ...schema,
       fields: [
         {
@@ -161,7 +165,7 @@ describe('Group', () => {
   });
 
   it('Can invalidate', async () => {
-    const group = Group.create(schema);
+    const group = createGroup(schema);
 
     group.a.addProps({ test: true });
 
@@ -209,7 +213,7 @@ describe('Group', () => {
 
     type T = GroupInstance<typeof s>;
 
-    const group = Group.create(s) as T;
+    const group = createGroup(s) as T;
 
     expect(group.value).toBe(null);
     await expect(group.setValue('test' as any)).rejects.toThrowError();
@@ -232,7 +236,7 @@ describe('Group', () => {
   });
 
   it('Can clear', async () => {
-    const group = Group.create(schema);
+    const group = createGroup(schema);
 
     await group.validate();
 

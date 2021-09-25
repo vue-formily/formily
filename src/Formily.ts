@@ -2,6 +2,7 @@ import { merge } from '@vue-formily/util';
 import { ElementOptions, FormSchema, ReadonlySchema } from './core/elements/types';
 import { ValidationRuleSchema } from './core/validations/types';
 import Form from './core/elements/Form';
+import { FormInstance } from './core/elements/instanceTypes';
 
 const defaultOptions: VueFormilyOptions = {
   alias: 'forms'
@@ -27,7 +28,7 @@ export default class Formily {
 
     (schema as any).rules = merge([], options.rules, rules);
 
-    const form = Form.create<F>(schema);
+    const form = (new Form((schema as unknown) as FormSchema) as unknown) as FormInstance<F>;
 
     this.$root[options.alias as string][form.formId] = form;
 

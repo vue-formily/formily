@@ -1,6 +1,5 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
-import { CollectionInstance } from './instanceTypes';
-import { CollectionSchema, ElementData, ReadonlySchema } from './types';
+import { CollectionSchema, ElementData } from './types';
 import Element from './Element';
 import Group from './Group';
 import {
@@ -80,8 +79,8 @@ export default class Collection extends Element {
     return sv;
   }
 
-  static create<F extends ReadonlySchema<CollectionSchema>>(schema: F, parent?: Element | null) {
-    return (new Collection((schema as unknown) as CollectionSchema, parent) as unknown) as CollectionInstance<F>;
+  static create(schema: CollectionSchema, parent?: Element | null) {
+    return new Collection(schema, parent);
   }
 
   readonly formType!: string;
