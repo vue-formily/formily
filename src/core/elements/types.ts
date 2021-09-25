@@ -23,8 +23,6 @@ export interface ElementData {
   options: ElementOptions;
 }
 
-// export type Elements = typeof Field | typeof Group | typeof Collection;
-
 export type ElementsSchemas<I = string> = FieldSchema<I> | GroupSchema<I> | CollectionSchema<I>;
 
 export interface GroupSchema<I = string> extends ElementSchema<I> {

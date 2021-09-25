@@ -1,5 +1,5 @@
 import { Rule, Validation } from '../validations';
-import { ElementOptions, FieldSchema } from './types';
+import { ElementOptions, FieldSchema, FieldType, FieldValue } from './types';
 import Evento from '../Evento';
 import { UnionToIntersection } from '../../utils-types';
 import { Plugs } from '../plugs';
@@ -73,8 +73,6 @@ export type CustomGroupProperties<T extends Record<string, any>, R extends any[]
   CustomGroupProperty<T['fields'][number], R>
 >;
 
-type FieldType = 'string' | 'number' | 'boolean' | 'date';
-
 export type FieldInstance<
   T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>,
   R extends Readonly<any[]> = T['rules']
@@ -87,7 +85,7 @@ export type FieldInstance<
   readonly formatted: string;
   raw: any;
   setRaw(value: any): Promise<void>;
-  value: any;
+  value: FieldValue;
   setValue(value: any): Promise<any>;
   setCheckedValue(checkedValue: any): void;
   readonly checked: any;

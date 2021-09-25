@@ -4,6 +4,7 @@ import { VueFormilyConfig, VueFormilyPlugin } from './types';
 import { FormInstance } from './core/elements/instanceTypes';
 import Formily, { VueFormilyOptions } from './Formily';
 import Objeto from './core/Objeto';
+import Evento from './core/Evento';
 import { def } from './utils';
 
 declare module '@vue/runtime-core' {
@@ -74,13 +75,40 @@ const VueFormily = {
   createFormily
 };
 
-export * from './types';
-export * from './core/elements/types';
-export * from './core/elements/instanceTypes';
-export * from './core/validations/types';
+export type { VueFormilyOptions };
+export type { VueFormilyConfig, VueFormilyPlugin, Localizer } from './types';
+export type {
+  ElementOptions,
+  ElementSchema,
+  ElementData,
+  ElementsSchemas,
+  GroupSchema,
+  CollectionSchema,
+  FormSchema,
+  FieldType,
+  FieldValue,
+  Format,
+  FieldSchema,
+  ReadonlySchema
+} from './core/elements/types';
+export type {
+  ElementInstance,
+  CustomValidationProperty,
+  CascadeRule,
+  CustomVariationProperties,
+  CustomGroupProperty,
+  CustomGroupProperties,
+  FieldInstance,
+  GroupInstance,
+  FormInstance,
+  CollectionInstance,
+  CollectionItemInstance
+} from './core/elements/instanceTypes';
+export { Validator, RuleSchema, ValidationOptions, ValidationRuleSchema } from './core/validations/types';
+export type { EventHandler, EventOptions, EventElement } from './core/Evento';
 
 export * from './core/validations';
-export { Field, Group, Collection, Form, Objeto, Formily };
+export { Field, Group, Collection, Form, Objeto, Formily, Evento };
 export { defineSchema } from './defineSchema';
 export { createFormily, VueFormily };
 export default VueFormily;
