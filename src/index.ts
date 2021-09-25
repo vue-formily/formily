@@ -80,7 +80,7 @@ export * from './core/elements/instanceTypes';
 export * from './core/validations/types';
 
 export * from './core/validations';
-export { Field, Group, Collection, Form, Objeto };
+export { Field, Group, Collection, Form, Objeto, Formily };
 export { defineSchema } from './defineSchema';
 export { createFormily, VueFormily };
 export default VueFormily;
