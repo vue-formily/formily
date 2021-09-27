@@ -1,13 +1,12 @@
 #!/bin/bash
 set -e
 
-if [[ -z $1 ]]; then
-  read -p "Enter new version: " -r VERSION
-else
-  VERSION=$1
-fi
+read -p "Enter new version: " -r VERSION
+read -p "Enter branch: " -r BRANCH
 
-read -p "Releasing $VERSION - are you sure? (y/n) " -n 1 -r
+BRANCH="${BRANCH:=main}"
+
+read -p "Releasing $VERSION on branch $BRANCH - are you sure? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo "Releasing $VERSION ..."
@@ -17,9 +16,9 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 
   # # publish
   if [[ -z $TAG ]]; then
-    np $VERSION --message "build: release $VERSION"
+    np $VERSION --branch $BRANCH --message "build: release $VERSION"
   else
-    np $VERSION --tag $TAG --message "build: release $VERSION"
+    np $VERSION --branch $BRANCH --tag $TAG --message "build: release $VERSION"
   fi
 
   # generate release note

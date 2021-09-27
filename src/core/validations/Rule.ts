@@ -54,8 +54,8 @@ export default class Rule extends Objeto {
   }
 
   async validate(value: any, props: Record<string, any> = {}, ...args: any[]): Promise<Rule> {
-    const translater = this.$i18n;
-    const data = this._d;
+    const { _d: data, plugs = {} } = this;
+    const translater = (plugs as any).i18n;
 
     let error = null;
     let valid = true;

@@ -1,41 +1,45 @@
 import { merge } from '@vue-formily/util';
-import { FormSchema } from './core/elements/types';
-import { VueFormilyOptions } from './types';
+import { ElementOptions, FormSchema, ReadonlySchema } from './core/elements/types';
+import { ValidationRuleSchema } from './core/validations/types';
 import Form from './core/elements/Form';
+import { FormInstance } from './core/elements/instanceTypes';
 
 const defaultOptions: VueFormilyOptions = {
   alias: 'forms'
 };
 
+export type VueFormilyOptions = ElementOptions & {
+  rules?: ValidationRuleSchema[];
+  alias?: string;
+};
+
 export default class Formily {
   options: VueFormilyOptions;
-  vm: any;
+  $root: any;
 
-  constructor(options: VueFormilyOptions = {}, vm: any) {
+  constructor(options: VueFormilyOptions = {}, $root: any) {
     this.options = merge({}, defaultOptions, options) as VueFormilyOptions;
-    this.vm = vm;
+    this.$root = $root;
   }
 
-  addForm(schema: FormSchema) {
-    const { vm, options } = this;
-    const { rules, props = {} } = schema;
+  addForm<F extends ReadonlySchema<FormSchema>>(schema: F) {
+    const { options } = this;
+    const { rules } = schema;
 
-    schema.rules = merge([], options.rules, rules);
+    (schema as any).rules = merge([], options.rules, rules);
 
-    props._formy = {
-      vm: () => this.vm
-    };
+    const form = (new Form((schema as unknown) as FormSchema) as unknown) as FormInstance<F>;
 
-    schema.props = props;
-
-    const form = new Form(schema);
-
-    vm.$set(vm[options.alias as string], form.formId, form);
+    this.$root.$set(this.$root[options.alias as string], form.formId, form);
 
     return form;
   }
 
   removeForm(formId: string) {
-    delete this.vm[this.options.alias as string][formId];
+    delete this.$root[this.options.alias as string][formId];
+  }
+
+  getForm<F>(formId: string): F {
+    return this.$root[this.options.alias as string][formId];
   }
 }

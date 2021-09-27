@@ -4,9 +4,9 @@ export type Validator = (
   ...args: any[]
 ) => string | boolean | Promise<string | boolean>;
 
-export interface RuleSchema {
+export interface RuleSchema<N = string> {
   validator?: Validator;
-  name?: string;
+  name?: N;
   message?: string;
 }
 
@@ -14,9 +14,9 @@ export interface ValidationOptions {
   bails?: boolean;
 }
 
-export type ValidationRuleSchema =
+export type ValidationRuleSchema<N = string> =
   | Validator
-  | (RuleSchema & {
+  | (RuleSchema<N> & {
       for?: string[];
       cascade?: boolean;
       inherit?: boolean;

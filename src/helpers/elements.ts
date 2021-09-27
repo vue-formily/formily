@@ -1,20 +1,12 @@
+import { ElementsSchemas } from '../core/elements/types';
 import { findIndex, get, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
-import { ValidationRuleSchema } from '../core/validations/types';
+import { ValidationRuleSchema, Validator } from '../core/validations/types';
 
 import { logMessage, isUndefined, def } from '../utils';
 
-const _Elements: any[] = [];
-
-export function register(F: any, ...args: any[]) {
-  if (!_Elements.includes(F)) {
-    _Elements.push(F);
-  }
-
-  F.register(...args);
-}
-
-export function genFields(fields: any[], ...args: any[]) {
-  const length = _Elements.length;
+export function genFields(fields: ElementsSchemas[], parent: any, ...args: any[]) {
+  const elements = parent._config.elements;
+  const length = elements.length;
   let invalidSchema: any;
 
   if (!length) {
@@ -23,11 +15,11 @@ export function genFields(fields: any[], ...args: any[]) {
 
   return fields.map(schema => {
     for (let i = 0; i < length; i++) {
-      const F = _Elements[i];
+      const F = elements[i];
       const accepted = F.accept(schema);
 
       if (accepted.valid) {
-        return F.create(schema, ...args);
+        return F.create(schema, parent, ...args);
       }
 
       invalidSchema = schema;
@@ -44,16 +36,20 @@ export function genFields(fields: any[], ...args: any[]) {
   });
 }
 
-export function cascadeRules(parentRules: ValidationRuleSchema[], fields: any[]) {
+export function cascadeRules(parentRules: ValidationRuleSchema[], fields: ElementsSchemas[]) {
   return parentRules
     ? fields.map(fieldSchema => {
         const { rules = [] } = fieldSchema;
 
         parentRules.forEach(parentRule => {
-          const index = findIndex(rules, (rule: any) => rule.name === parentRule.name);
+          const index = findIndex(rules as any, (rule: any) => rule.name === parentRule.name);
           const rule = rules[index];
 
-          if (!isFunction(parentRule) && parentRule.cascade && (!rule || rule.inherit !== false)) {
+          if (
+            !isFunction(parentRule) &&
+            parentRule.cascade &&
+            (!rule || (rule as Exclude<ValidationRuleSchema, Validator>).inherit !== false)
+          ) {
             rules[index < 0 ? 0 : index] = merge({}, parentRule, rule);
           }
         });
@@ -102,7 +98,7 @@ export function genProps(this: any, source: Record<string, any>, properties: any
         get: () => prop.call(this, this, ...args)
       });
     } else {
-      const translater = this.$i18n;
+      const translater = this.plugs.i18n;
 
       source[key] = isString(prop) && translater ? translater.translate(prop, this, ...args) : prop;
     }

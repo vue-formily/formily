@@ -9,11 +9,12 @@ import {
   invalidateSchemaValidation,
   normalizeRules
 } from '../../helpers';
-import { logMessage, readonlyDumpProp } from '../../utils';
+import { logMessage, readonlyDumpProp, readonlyDef } from '../../utils';
 import Validation from '../validations/Validation';
 
 const FORM_TYPE = 'collection';
-class CollectionItem extends Group {
+
+export class CollectionItem extends Group {
   get index() {
     const { groups } = this.parent as any;
 
@@ -25,7 +26,8 @@ class CollectionItem extends Group {
   }
 }
 
-type CollectionData = ElementData & {
+type CollectionData = Omit<ElementData, 'schema'> & {
+  schema: CollectionSchema;
   value: any[] | null;
   pending: boolean;
 };
@@ -40,7 +42,7 @@ async function onGroupChanged(this: Collection, ...args: any[]) {
       value = this._d.value = [];
     }
 
-    value[group.index] = group.value;
+    readonlyDef(value, group.index, () => group.value);
   }
 
   await onCollectionChanged.apply(this, args);
@@ -77,7 +79,7 @@ export default class Collection extends Element {
     return sv;
   }
 
-  static create(schema: CollectionSchema, parent?: Element | null): Collection {
+  static create(schema: CollectionSchema, parent?: Element | null) {
     return new Collection(schema, parent);
   }
 
@@ -171,7 +173,7 @@ export default class Collection extends Element {
     }
   }
 
-  addGroup(): CollectionItem {
+  addGroup() {
     if (!this.groups) {
       this.groups = [];
     }

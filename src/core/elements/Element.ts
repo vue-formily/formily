@@ -31,6 +31,7 @@ export default abstract class Element extends Objeto {
   protected _d!: ElementData;
 
   props: Record<string, any> = {};
+  data = new WeakMap();
 
   shaked = false;
 
@@ -39,13 +40,14 @@ export default abstract class Element extends Objeto {
   constructor(schema: ElementSchema, parent?: Element | null) {
     super();
 
+    this.parent = parent || null;
+
     const data = this._d;
 
     readonlyDumpProp(data, 'schema', schema);
 
     const { model, props = {}, on = {}, options } = schema;
 
-    readonlyDumpProp(this, 'parent', parent || null);
     readonlyDumpProp(this, 'model', model || this.formId);
 
     dumpProp(data, 'ancestors', genElementAncestors(this));
@@ -70,10 +72,6 @@ export default abstract class Element extends Objeto {
     }
 
     return this.validation.errors ? this.validation.errors[0] : null;
-  }
-
-  getVm() {
-    return this.getProps('_formy.vm', { up: true });
   }
 
   getProps(path: string, options?: { up?: boolean }) {

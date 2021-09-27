@@ -10,7 +10,7 @@ import {
   genFields
 } from '../../helpers';
 import Element from './Element';
-import { logMessage, readonlyDumpProp } from '../../utils';
+import { logMessage, readonlyDumpProp, readonlyDef } from '../../utils';
 import Validation from '../validations/Validation';
 
 type GroupData = ElementData & {
@@ -22,17 +22,18 @@ const FORM_TYPE = 'group';
 
 async function onFieldChanged(this: Group, ...args: any[]) {
   const [field] = args;
+  const { valid, model } = field;
 
   this._d.pending = true;
 
-  if (field.valid) {
+  if (valid) {
     let value = this._d.value;
 
     if (!value) {
       value = this._d.value = {};
     }
 
-    value[field.model] = field.value;
+    readonlyDef(value, model, () => (this as any)[model].value);
   }
 
   if (this.options.silent) {
@@ -62,7 +63,7 @@ export default class Group extends Element {
     return sv;
   }
 
-  static create(schema: GroupSchema, parent?: Element | null): Group {
+  static create(schema: GroupSchema, parent?: Element | null) {
     return new Group(schema, parent);
   }
 
@@ -71,8 +72,6 @@ export default class Group extends Element {
   protected _d!: GroupData;
 
   fields: Element[];
-
-  [key: string]: any;
 
   constructor(schema: GroupSchema, parent?: Element | null) {
     super(schema, parent);
@@ -93,7 +92,7 @@ export default class Group extends Element {
     this.fields = genFields(schema.fields, this) as Element[];
 
     this.fields.forEach(field => {
-      this[field.model] = field;
+      (this as any)[field.model] = field;
 
       field.on('changed:formy', (...args: any[]) => onFieldChanged.apply(this, args), { noOff: true });
     });
@@ -118,7 +117,7 @@ export default class Group extends Element {
 
     await Promise.all(
       Object.keys(obj).map(async model => {
-        const field = this[model];
+        const field = (this as any)[model];
 
         if (field) {
           await field.setValue(obj[model]);
