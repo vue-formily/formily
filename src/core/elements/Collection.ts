@@ -9,7 +9,7 @@ import {
   invalidateSchemaValidation,
   normalizeRules
 } from '../../helpers';
-import { logMessage, readonlyDumpProp } from '../../utils';
+import { logMessage, readonlyDumpProp, readonlyDef } from '../../utils';
 import Validation from '../validations/Validation';
 
 const FORM_TYPE = 'collection';
@@ -42,7 +42,7 @@ async function onGroupChanged(this: Collection, ...args: any[]) {
       value = this._d.value = [];
     }
 
-    value[group.index] = group.value;
+    readonlyDef(value, group.index, () => group.value);
   }
 
   await onCollectionChanged.apply(this, args);

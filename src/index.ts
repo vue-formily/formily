@@ -47,9 +47,14 @@ function createFormily() {
         },
         data(this: any) {
           const alias = this.$formily.options.alias;
+          let forms = this.$root[alias];
+
+          if (!forms) {
+            forms = this.$root[alias] = {};
+          }
 
           return {
-            [alias]: this.$root === this ? {} : this.$root[alias]
+            [alias]: forms
           };
         }
       });

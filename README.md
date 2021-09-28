@@ -58,7 +58,7 @@ npm install @vue-formily/formily --save
 ### Vue 3.x
 ```typescript
 import { createApp } from 'vue'
-mport { createFormily } from '@vue-formily/formily';
+import { createFormily } from '@vue-formily/formily';
 
 const formily = createFormily();
 
@@ -84,9 +84,11 @@ app.use(formily, {
 #### Vue 2.x
 ```typescript
 import Vue from 'vue';
-import VueFormily from '@vue-formily/formily';
+import { createFormily } from '@vue-formily/formily';
 
-Vue.use(VueFormily, {
+const formily = createFormily();
+
+Vue.use(formily, {
   // By default, vue-formily will execute the 
   // validation silently when changing element's value.
   // To disable it, just set the `silent` to `false`.

@@ -20,9 +20,13 @@ export function dumpProp(obj: any, key: string, value: any, descriptor?: Record<
 }
 
 export function def(obj: any, key: string, descriptor?: Record<string, any>) {
-  Object.defineProperty(obj, key, {
+  return Object.defineProperty(obj, key, {
     configurable: true,
     enumerable: true,
     ...descriptor
   });
+}
+
+export function readonlyDef(obj: any, key: string, get: () => any, descriptor?: Record<string, any>) {
+  return def(obj, key, { get, ...descriptor });
 }

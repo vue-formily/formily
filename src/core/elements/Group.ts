@@ -10,7 +10,7 @@ import {
   genFields
 } from '../../helpers';
 import Element from './Element';
-import { logMessage, readonlyDumpProp } from '../../utils';
+import { logMessage, readonlyDumpProp, readonlyDef } from '../../utils';
 import Validation from '../validations/Validation';
 
 type GroupData = ElementData & {
@@ -22,17 +22,18 @@ const FORM_TYPE = 'group';
 
 async function onFieldChanged(this: Group, ...args: any[]) {
   const [field] = args;
+  const { valid, model } = field;
 
   this._d.pending = true;
 
-  if (field.valid) {
+  if (valid) {
     let value = this._d.value;
 
     if (!value) {
       value = this._d.value = {};
     }
 
-    value[field.model] = field.value;
+    readonlyDef(value, model, () => (this as any)[model].value);
   }
 
   if (this.options.silent) {

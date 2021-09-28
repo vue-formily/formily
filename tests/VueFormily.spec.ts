@@ -303,6 +303,14 @@ describe('VueFormily', () => {
         },
         {
           formId: 'group',
+          rules: [
+            {
+              name: 'test',
+              validator(value, props, group) {
+                return group.field.value !== '2';
+              }
+            }
+          ],
           fields: [
             {
               formId: 'field',
@@ -353,5 +361,11 @@ describe('VueFormily', () => {
     await flushPromises();
 
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - 1');
+
+    test.group.field.raw = 2;
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - ');
   });
 });
