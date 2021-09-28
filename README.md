@@ -58,7 +58,7 @@ npm install @vue-formily/formily --save
 ### Vue 3.x
 ```typescript
 import { createApp } from 'vue'
-mport { createFormily } from '@vue-formily/formily';
+import { createFormily } from '@vue-formily/formily';
 
 const formily = createFormily();
 
