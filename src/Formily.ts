@@ -22,7 +22,7 @@ export default class Formily {
     this.$root = $root;
   }
 
-  addForm<F extends ReadonlySchema<FormSchema>>(schema: F) {
+  addForm<F extends ReadonlySchema<FormSchema>>(schema: F): FormInstance<F> {
     const { options } = this;
     const { rules } = schema;
 
