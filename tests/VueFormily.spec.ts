@@ -1,6 +1,6 @@
 import { h } from 'vue';
 import { mount } from '@vue/test-utils';
-import { createFormily, defineSchema } from '@/index';
+import { createFormily, defineSchema, useFormily } from '@/index';
 import { Form } from '@/core/elements';
 import flushPromises from 'flush-promises';
 import { required } from './helpers/rules';
@@ -20,6 +20,35 @@ describe('VueFormily', () => {
     );
 
     expect('$formily' in wrapper.vm).toBe(true);
+  });
+
+  it('Should `useFormily` successfully', () => {
+    const wrapper = mount(
+      {
+        setup() {
+          const formily = useFormily();
+
+          formily.addForm({
+            formId: 'form',
+            fields: [
+              {
+                formId: 'a',
+                format: 'test'
+              }
+            ]
+          });
+        },
+        template: '<div></div>'
+      },
+      {
+        global: {
+          plugins: [createFormily()]
+        }
+      }
+    );
+
+    expect('$formily' in wrapper.vm).toBe(true);
+    expect(wrapper.vm.forms.form).toBeInstanceOf(Form);
   });
 
   it('Should add form successfully', () => {

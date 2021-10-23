@@ -1,11 +1,11 @@
-import { App } from 'vue';
+import { App, ComponentInternalInstance, getCurrentInstance } from 'vue';
 import { Field, Group, Collection, Form } from './core/elements';
 import { VueFormilyConfig, VueFormilyPlugin } from './types';
 import { FormInstance } from './core/elements/instanceTypes';
 import Formily, { VueFormilyOptions } from './Formily';
 import Objeto from './core/Objeto';
 import Evento from './core/Evento';
-import { def } from './utils';
+import { def, logMessage } from './utils';
 
 declare module '@vue/runtime-core' {
   export interface ComponentCustomProperties {
@@ -42,19 +42,14 @@ function createFormily() {
       [Field, Collection, Group].forEach(F => this.register(F, options));
 
       app.mixin({
-        beforeCreate(this: any) {
-          this.$formily = new Formily(options, this.$root);
+        beforeCreate() {
+          this.$formily = this.$root.$formily || new Formily(options, this.$root);
         },
         data(this: any) {
           const alias = this.$formily.options.alias;
-          let forms = this.$root[alias];
-
-          if (!forms) {
-            forms = this.$root[alias] = {};
-          }
 
           return {
-            [alias]: forms
+            [alias]: this.$root[alias] || {}
           };
         }
       });
@@ -74,6 +69,22 @@ function createFormily() {
   _configs.set(vueFormily, config);
 
   return vueFormily;
+}
+
+export function useFormily(options: VueFormilyOptions = {}) {
+  const instance: ComponentInternalInstance | null = getCurrentInstance();
+
+  if (instance == null) {
+    throw new Error(logMessage('Must be called at the top of a `setup` function'));
+  }
+
+  const $root = instance.proxy && instance.proxy.$root;
+
+  if (!$root) {
+    throw new Error(logMessage('Unexpected error'));
+  }
+
+  return options ? $root.$formily : new Formily(options, $root);
 }
 
 const VueFormily = {
@@ -109,7 +120,7 @@ export type {
   CollectionInstance,
   CollectionItemInstance
 } from './core/elements/instanceTypes';
-export { Validator, RuleSchema, ValidationOptions, ValidationRuleSchema } from './core/validations/types';
+export type { Validator, RuleSchema, ValidationOptions, ValidationRuleSchema } from './core/validations/types';
 export type { EventHandler, EventOptions, EventElement } from './core/Evento';
 
 export * from './core/validations';
