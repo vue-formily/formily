@@ -4,7 +4,7 @@ import { ValidationRuleSchema, Validator } from '../core/validations/types';
 
 import { logMessage, isUndefined, def } from '../utils';
 
-export function genFields(fields: ElementsSchemas[], parent: any, ...args: any[]) {
+export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {
   const elements = parent._config.elements;
   const length = elements.length;
   let invalidSchema: any;
@@ -13,27 +13,25 @@ export function genFields(fields: ElementsSchemas[], parent: any, ...args: any[]
     throw new Error(logMessage('No form elements have been registed yet'));
   }
 
-  return fields.map(schema => {
-    for (let i = 0; i < length; i++) {
-      const F = elements[i];
-      const accepted = F.accept(schema);
+  for (let i = 0; i < length; i++) {
+    const F = elements[i];
+    const accepted = F.accept(schema);
 
-      if (accepted.valid) {
-        return F.create(schema, parent, ...args);
-      }
-
-      invalidSchema = schema;
+    if (accepted.valid) {
+      return F.create(schema, parent, ...args);
     }
 
-    throw new Error(
-      logMessage(
-        `Failed to create form elmenent, caused by schema:\n ${JSON.stringify(invalidSchema, null, 2).slice(
-          0,
-          50
-        )}\n\t...\n`
-      )
-    );
-  });
+    invalidSchema = schema;
+  }
+
+  throw new Error(
+    logMessage(
+      `Failed to create form elmenent, caused by schema:\n ${JSON.stringify(invalidSchema, null, 2).slice(
+        0,
+        50
+      )}\n\t...\n`
+    )
+  );
 }
 
 export function cascadeRules(parentRules: ValidationRuleSchema[], fields: ElementsSchemas[]) {

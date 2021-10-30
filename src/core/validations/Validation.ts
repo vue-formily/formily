@@ -5,10 +5,6 @@ import Objeto from '../Objeto';
 
 type ValitionRuleSchema = Validator | RuleSchema;
 
-type Options = {
-  from?: number;
-};
-
 export default class Validation extends Objeto {
   rules: Rule[] = [];
 
@@ -34,11 +30,11 @@ export default class Validation extends Objeto {
     return errors.length ? errors : null;
   }
 
-  addRules(rulesOrSchemas: (Rule | ValitionRuleSchema)[], { from }: Options = {}): Rule[] {
+  addRules(rulesOrSchemas: (Rule | ValitionRuleSchema)[], { from }: { from?: number } = {}): Rule[] {
     from = isNumber(from) ? from++ : -Infinity;
 
     return rulesOrSchemas.map((schema: Rule | ValitionRuleSchema) => {
-      return this.addRule(schema, { from: (from as number)++ });
+      return this.addRule(schema, { at: (from as number)++ });
     });
   }
 
@@ -46,7 +42,7 @@ export default class Validation extends Objeto {
     return removes.map(remove => this.removeRule(remove));
   }
 
-  addRule(ruleOrSchema: Rule | ValitionRuleSchema, { from }: Options = {}): Rule {
+  addRule(ruleOrSchema: Rule | ValitionRuleSchema, { at }: { at?: number } = {}): Rule {
     const rule = new Rule(ruleOrSchema);
     const currentRule = (this as any)[rule.name];
 
@@ -56,7 +52,7 @@ export default class Validation extends Objeto {
 
     const length = this.rules.length;
 
-    this.rules.splice(isNumber(from) && from >= 0 && from <= length ? from : length, 0, rule);
+    this.rules.splice(isNumber(at) ? at : length, 0, rule);
 
     (this as any)[rule.name] = rule;
 

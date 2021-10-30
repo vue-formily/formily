@@ -58,6 +58,10 @@ export default abstract class Element extends Objeto {
     Object.keys(on).map(name => this.on(name, on[name]));
   }
 
+  get schema() {
+    return this._d.schema;
+  }
+
   get options(): ElementOptions {
     return this._d.options;
   }

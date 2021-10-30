@@ -1,5 +1,5 @@
-import { isPlainObject } from '@vue-formily/util';
-import { ElementData, GroupSchema } from './types';
+import { findIndex, isNumber, isPlainObject } from '@vue-formily/util';
+import { ElementData, GroupSchema, ElementsSchemas } from './types';
 
 import {
   cascadeRules,
@@ -7,7 +7,7 @@ import {
   getSchemaAcceptance,
   invalidateSchemaValidation,
   acceptSchema,
-  genFields
+  genField
 } from '../../helpers';
 import Element from './Element';
 import { logMessage, readonlyDumpProp, readonlyDef } from '../../utils';
@@ -19,6 +19,10 @@ type GroupData = ElementData & {
 };
 
 const FORM_TYPE = 'group';
+
+function genFieldProp(fieldOrModel: any) {
+  return `$${isPlainObject(fieldOrModel) ? fieldOrModel.model : fieldOrModel}`;
+}
 
 async function onFieldChanged(this: Group, ...args: any[]) {
   const [field] = args;
@@ -33,7 +37,7 @@ async function onFieldChanged(this: Group, ...args: any[]) {
       value = this._d.value = {};
     }
 
-    readonlyDef(value, model, () => (this as any)[model].value);
+    readonlyDef(value, model, () => field.value);
   }
 
   if (this.options.silent) {
@@ -42,6 +46,7 @@ async function onFieldChanged(this: Group, ...args: any[]) {
 
   this.emit('changed', this, ...args);
 }
+
 export default class Group extends Element {
   static FORM_TYPE = FORM_TYPE;
 
@@ -71,7 +76,7 @@ export default class Group extends Element {
   readonly type!: 'enum';
   protected _d!: GroupData;
 
-  fields: Element[];
+  fields: Element[] = [];
 
   constructor(schema: GroupSchema, parent?: Element | null) {
     super(schema, parent);
@@ -89,13 +94,7 @@ export default class Group extends Element {
       schema.fields = cascadeRules(schema.rules, schema.fields);
     }
 
-    this.fields = genFields(schema.fields, this) as Element[];
-
-    this.fields.forEach(field => {
-      (this as any)[field.model] = field;
-
-      field.on('changed:formy', (...args: any[]) => onFieldChanged.apply(this, args), { noOff: true });
-    });
+    schema.fields.forEach((field, i) => this.addField(field));
 
     this._d.validation = new Validation(normalizeRules(schema.rules, this.type));
 
@@ -117,7 +116,7 @@ export default class Group extends Element {
 
     await Promise.all(
       Object.keys(obj).map(async model => {
-        const field = (this as any)[model];
+        const field = (this as any)[genFieldProp(model)];
 
         if (field) {
           await field.setValue(obj[model]);
@@ -152,6 +151,41 @@ export default class Group extends Element {
     this.cleanUp();
 
     await Promise.all(this.fields.map(async (field: any) => await field.clear()));
+  }
+
+  addField(schema: ElementsSchemas, { at }: { at?: number } = {}): Element {
+    const field = genField(schema, this);
+    const prop = genFieldProp(field);
+
+    if (prop in this) {
+      throw new Error(logMessage(`Dupplicated model: ${field.model}`));
+    }
+
+    (this as any)[prop] = field;
+
+    field.on('changed:formy', (...args: any[]) => onFieldChanged.apply(this, args), { noOff: true });
+
+    const schemaFields = this._d.schema.fields;
+    const index = isNumber(at) ? at : this.fields.length;
+
+    this.fields.splice(index, 0, field);
+
+    if (schemaFields[index] !== schema) {
+      schemaFields.splice(index, 0, schema);
+    }
+
+    return field;
+  }
+
+  removeField(elementOrId: Record<string, any> | string) {
+    const formId = isPlainObject(elementOrId) ? elementOrId.formId : elementOrId;
+    const index = findIndex(this.fields, field => field.formId === formId);
+
+    if (index !== -1) {
+      const [field] = this.fields.splice(index, 1);
+
+      delete (this as any)[genFieldProp(field)];
+    }
   }
 
   async validate({ cascade = true }: { cascade?: boolean } = {}) {

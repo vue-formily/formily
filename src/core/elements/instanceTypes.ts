@@ -1,8 +1,9 @@
 import { Rule, Validation } from '../validations';
-import { ElementOptions, FieldSchema, FieldType, FieldValue } from './types';
+import { ElementsSchemas, ElementOptions, FieldSchema, FieldType, FieldValue } from './types';
 import Evento from '../Evento';
 import { UnionToIntersection } from '../../utils-types';
 import { Plugs } from '../plugs';
+import { Element } from '.';
 
 export type ElementInstance = {
   readonly parent: ElementInstance | null;
@@ -13,6 +14,7 @@ export type ElementInstance = {
   readonly options: ElementOptions;
   readonly validation: Validation;
   readonly error: string;
+  readonly schema: Record<string, any>;
   getProps(
     path: string,
     options?: {
@@ -59,7 +61,7 @@ export type CustomVariationProperties<R, E = undefined> = UnionToIntersection<
 
 export type CustomGroupProperty<F, R extends any[]> = F extends Record<string, any>
   ? {
-      [key in F['formId']]: F['fields'] extends Readonly<unknown[]>
+      [key in `$${F['formId']}`]: F['fields'] extends Readonly<unknown[]>
         ? GroupInstance<F, R>
         : F['group'] extends Readonly<Record<string, unknown>>
         ? CollectionInstance<F, R>
@@ -110,6 +112,8 @@ export type GroupInstance<
   isValid(): boolean;
   reset(): void;
   clear(): Promise<void>;
+  addField(schema: ElementsSchemas, options?: { at?: number }): Element;
+  removeField(elementOrId: Record<string, any> | string): void;
   validate(options?: { cascade?: boolean }): Promise<void>;
 } & ElementInstance;
 
@@ -128,6 +132,8 @@ export type FormInstance<
   isValid(): boolean;
   reset(): void;
   clear(): Promise<void>;
+  addField(schema: ElementsSchemas, options?: { at?: number }): Element;
+  removeField(elementOrId: Record<string, any> | string): void;
   validate(options?: { cascade?: boolean }): Promise<void>;
 } & ElementInstance;
 

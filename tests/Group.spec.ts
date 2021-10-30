@@ -13,27 +13,6 @@ function createGroup<F extends ReadonlySchema<GroupSchema>>(schema: F) {
 }
 
 describe('Group', () => {
-  const schema = defineSchema({
-    formId: 'group_test',
-    rules: [
-      {
-        ...required,
-        message: 'test'
-      }
-    ],
-    fields: [
-      {
-        formId: 'a',
-        rules: [
-          {
-            ...required,
-            message: 'abc'
-          }
-        ]
-      }
-    ]
-  });
-
   it('Throw error with undefined `fields`', () => {
     expect(function () {
       // eslint-disable-next-line no-new
@@ -42,10 +21,31 @@ describe('Group', () => {
   });
 
   it('Can access field from index signature', () => {
-    const group = createGroup(schema);
+    const group = createGroup(
+      defineSchema({
+        formId: 'group_test',
+        rules: [
+          {
+            ...required,
+            message: 'test'
+          }
+        ],
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      })
+    );
 
-    expect(group).toHaveProperty('a');
-    expect(group.a).toBeInstanceOf(Field);
+    expect(group).toHaveProperty('$a');
+    expect(group.$a).toBeInstanceOf(Field);
   });
 
   it('Can cascade rules', async () => {
@@ -79,14 +79,35 @@ describe('Group', () => {
     await flushPromises();
 
     expect(group.validation.required).toBeInstanceOf(Rule);
-    expect(group.a.validation.required).toBeInstanceOf(Rule);
-    expect(group.a.validation.required.message).toBe('test');
-    expect(group.b.validation.required.valid).toBe(false);
-    expect(group.b.validation.required.message).toBe(null);
+    expect(group.$a.validation.required).toBeInstanceOf(Rule);
+    expect(group.$a.validation.required.message).toBe('test');
+    expect(group.$b.validation.required.valid).toBe(false);
+    expect(group.$b.validation.required.message).toBe(null);
   });
 
   it('Can validate', async () => {
-    const group = createGroup(schema);
+    const group = createGroup(
+      defineSchema({
+        formId: 'group_test',
+        rules: [
+          {
+            ...required,
+            message: 'test'
+          }
+        ],
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      })
+    );
 
     await group.validate();
 
@@ -94,7 +115,7 @@ describe('Group', () => {
 
     expect(group.valid).toBe(false);
     expect(group.error).toBe('test');
-    expect(group.a.error).toBe('abc');
+    expect(group.$a.error).toBe('abc');
 
     group.reset();
 
@@ -104,11 +125,32 @@ describe('Group', () => {
 
     expect(group.valid).toBe(false);
     expect(group.error).toBe('test');
-    expect(group.a.valid).toBe(true);
+    expect(group.$a.valid).toBe(true);
   });
 
   it('Can shake', async () => {
-    const group = createGroup(schema);
+    const group = createGroup(
+      defineSchema({
+        formId: 'group_test',
+        rules: [
+          {
+            ...required,
+            message: 'test'
+          }
+        ],
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      })
+    );
 
     await group.validate();
 
@@ -116,7 +158,7 @@ describe('Group', () => {
 
     expect(group.valid).toBe(false);
     expect(group.error).toBe('test');
-    expect(group.a.error).toBe('abc');
+    expect(group.$a.error).toBe('abc');
 
     group.reset();
 
@@ -126,24 +168,32 @@ describe('Group', () => {
 
     expect(group.valid).toBe(false);
     expect(group.error).toBe('test');
-    expect(group.a.error).toBe(null);
+    expect(group.$a.error).toBe(null);
   });
 
   it('Can reset', async () => {
-    const group = createGroup({
-      ...schema,
-      fields: [
-        {
-          formId: 'a',
-          rules: [
-            {
-              ...required,
-              message: 'abc'
-            }
-          ]
-        }
-      ]
-    });
+    const group = createGroup(
+      defineSchema({
+        formId: 'group_test',
+        rules: [
+          {
+            ...required,
+            message: 'test'
+          }
+        ],
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      })
+    );
 
     expect(group.valid).toBe(true);
 
@@ -153,26 +203,47 @@ describe('Group', () => {
 
     expect(group.valid).toBe(false);
 
-    group.a.shake();
+    group.$a.shake();
 
-    expect(group.a.valid).toBe(false);
-    expect(group.a.error).toBe('abc');
+    expect(group.$a.valid).toBe(false);
+    expect(group.$a.error).toBe('abc');
 
     group.reset();
 
     expect(group.valid).toBe(true);
-    expect(group.a.valid).toBe(true);
+    expect(group.$a.valid).toBe(true);
   });
 
   it('Can invalidate', async () => {
-    const group = createGroup(schema);
+    const group = createGroup(
+      defineSchema({
+        formId: 'group_test',
+        rules: [
+          {
+            ...required,
+            message: 'test'
+          }
+        ],
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      })
+    );
 
-    group.a.addProps({ test: true });
+    group.$a.addProps({ test: true });
 
     // set value to pass required rule
-    await group.a.setValue('test');
+    await group.$a.setValue('test');
 
-    group.a.validation.addRule({
+    group.$a.validation.addRule({
       name: 'test',
       validator(_a: any, _b: any, field: Field) {
         return field.props.test;
@@ -184,7 +255,7 @@ describe('Group', () => {
     expect(group.error).toBe(null);
 
     // make the rule to false
-    group.a.props.test = false;
+    group.$a.props.test = false;
 
     // trigger update
     await group.validate();
@@ -192,14 +263,28 @@ describe('Group', () => {
     group.shake();
 
     expect(group.valid).toBe(false);
-    expect(group.a.error).toBe('invalid field');
+    expect(group.$a.error).toBe('invalid field');
   });
 
   it('Can set value', async () => {
     const s = defineSchema({
-      ...schema,
+      formId: 'group_test',
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
       fields: [
-        ...schema.fields,
+        {
+          formId: 'a',
+          rules: [
+            {
+              ...required,
+              message: 'abc'
+            }
+          ]
+        },
         {
           formId: 'b',
           fields: [
@@ -231,25 +316,165 @@ describe('Group', () => {
         c: 'abc'
       }
     });
-    expect(group.a.value).toBe('test');
-    expect(group.b.c.value).toBe('abc');
+    expect(group.$a.value).toBe('test');
+    expect(group.$b.$c.value).toBe('abc');
   });
 
   it('Can clear', async () => {
-    const group = createGroup(schema);
+    const group = createGroup(
+      defineSchema({
+        formId: 'group_test',
+        rules: [
+          {
+            ...required,
+            message: 'test'
+          }
+        ],
+        fields: [
+          {
+            formId: 'a',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          },
+          {
+            formId: 'b',
+            fields: [
+              {
+                formId: 'c'
+              }
+            ]
+          }
+        ]
+      })
+    );
 
     await group.validate();
 
-    group.a.shake();
+    group.$a.shake();
 
-    expect(group.a.valid).toBe(false);
-    expect(group.a.error).toBe('abc');
+    expect(group.$a.valid).toBe(false);
+    expect(group.$a.error).toBe('abc');
 
     await group.clear();
 
     expect(group.valid).toBe(false);
     expect(group.value).toBe(null);
-    expect(group.a.raw).toBe('');
-    expect(group.a.value).toBe(null);
+    expect(group.$a.raw).toBe('');
+    expect(group.$a.value).toBe(null);
+  });
+
+  it('Can add field', async () => {
+    const group = createGroup({
+      formId: 'group_test',
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      fields: [
+        {
+          formId: 'a'
+        }
+      ]
+    });
+
+    group.addField({
+      formId: 'b',
+      value: 'bbb'
+    });
+    group.addField({
+      formId: 'c'
+    });
+    group.addField(
+      {
+        formId: 'd'
+      },
+      {
+        at: 1
+      }
+    );
+
+    await flushPromises();
+
+    expect((group as any).$b).toBeInstanceOf(Field);
+    expect(group.fields.length).toBe(4);
+    expect(group.fields[1].formId).toBe('d');
+    expect((group as any).$b.value).toBe('bbb');
+    expect(group.value).toEqual({ b: 'bbb' });
+
+    expect(() => {
+      group.addField({
+        formId: 'b'
+      });
+    }).toThrow();
+  });
+
+  it('Can remove field', async () => {
+    const group = createGroup({
+      formId: 'group_test',
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      fields: [
+        {
+          formId: 'a'
+        }
+      ]
+    });
+
+    group.addField({
+      formId: 'b'
+    });
+    group.addField({
+      formId: 'c'
+    });
+    group.addField(
+      {
+        formId: 'd'
+      },
+      {
+        at: 1
+      }
+    );
+
+    group.removeField('c');
+    group.removeField(group.fields[0]);
+
+    expect(group.fields.length).toBe(2);
+    expect((group as any).$c).toBe(undefined);
+    expect((group as any).$a).toBe(undefined);
+  });
+
+  it('Can get schema', async () => {
+    const group = createGroup({
+      formId: 'group_test',
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      fields: [
+        {
+          formId: 'a'
+        }
+      ]
+    });
+
+    group.addField({
+      formId: 'b'
+    });
+
+    expect(JSON.stringify(group.schema)).toBe(
+      '{"formId":"group_test","rules":[{"name":"required","message":"test"}],"fields":[{"formId":"a","_is":"string"},{"formId":"b","_is":"string"}],"_is":"group"}'
+    );
   });
 });
