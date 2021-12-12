@@ -9,29 +9,36 @@ const formily = createFormily();
 describe('Form', () => {
   const schema = defineSchema({
     formId: 'form',
+    formType: 'group',
     fields: [
       {
         formId: 'a',
+        formType: 'field',
         type: 'string'
       },
       {
         formId: 'b',
+        formType: 'collection',
         group: {
           fields: [
             {
               formId: 'c',
+              formType: 'field',
               type: 'string'
             },
             {
               formId: 'd',
+              formType: 'collection',
               group: {
                 fields: [
                   {
                     formId: 'e',
+                    formType: 'field',
                     type: 'string'
                   },
                   {
                     formId: 'f',
+                    formType: 'field',
                     type: 'string'
                   }
                 ]

@@ -1,5 +1,5 @@
 import { Rule, Validation } from '../validations';
-import { ElementsSchemas, ElementOptions, FieldSchema, FieldType, FieldValue } from './types';
+import { ElementsSchemas, ElementOptions, FieldSchema, FieldType, FieldValue, GroupSchema } from './types';
 import Evento from '../Evento';
 import { UnionToIntersection } from '../../utils-types';
 import { Plugs } from '../plugs';
@@ -8,6 +8,7 @@ import { Element } from '.';
 export type ElementInstance = {
   readonly parent: ElementInstance | null;
   readonly model: string;
+  readonly type: string;
   props: Record<string, any>;
   data: WeakMap<Record<string, unknown>, any>;
   shaked: boolean;
@@ -28,6 +29,7 @@ export type ElementInstance = {
   getHtmlName(): string;
   shake(): void;
   cleanUp(): void;
+  getSchema(): Record<string, any>;
 } & { plugs: Plugs } & Evento;
 
 export type CustomValidationProperty<R> = R extends Record<string, any>
@@ -80,8 +82,8 @@ export type FieldInstance<
   R extends Readonly<any[]> = T['rules']
 > = {
   validation: CustomVariationProperties<T['rules'], R>;
-  readonly formType: string;
   readonly type: FieldType;
+  readonly formType: 'field';
   readonly default: any;
   readonly pending: boolean;
   readonly formatted: string;
@@ -103,8 +105,8 @@ export type GroupInstance<
 > = UnionToIntersection<CustomGroupProperties<T>> & {
   validation: CustomVariationProperties<T['rules'], R>;
   fields: T['fields'];
-  readonly formType: string;
   readonly type: 'enum';
+  readonly formType: 'group';
   readonly pending: boolean;
   readonly value: Record<string, any>;
   setValue(obj: Record<string, any>): Promise<Record<string, any>>;
@@ -115,6 +117,7 @@ export type GroupInstance<
   addField(schema: ElementsSchemas, options?: { at?: number }): Element;
   removeField(elementOrId: Record<string, any> | string): void;
   validate(options?: { cascade?: boolean }): Promise<void>;
+  getSchema(): GroupSchema;
 } & ElementInstance;
 
 export type FormInstance<
@@ -122,9 +125,9 @@ export type FormInstance<
   R extends Readonly<any[]> = T['rules']
 > = UnionToIntersection<CustomGroupProperties<T>> & {
   validation: CustomVariationProperties<T['rules'], R>;
-  readonly formType: string;
   fields: T['fields'];
   readonly type: 'enum';
+  readonly formType: 'group';
   readonly pending: boolean;
   readonly value: Record<string, any>;
   setValue(obj: Record<string, any>): Promise<Record<string, any>>;
@@ -143,8 +146,8 @@ export type CollectionInstance<
 > = {
   groups: Array<CollectionItemInstance<T>>;
   validation: CustomVariationProperties<T['rules'], R>;
-  readonly formType: string;
   readonly type: 'set';
+  readonly formType: 'collection';
   readonly pending: boolean;
   readonly value: any[];
   setValue(

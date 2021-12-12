@@ -5,7 +5,7 @@ import { FormInstance } from './core/elements/instanceTypes';
 import Formily, { VueFormilyOptions } from './Formily';
 import Objeto from './core/Objeto';
 import Evento from './core/Evento';
-import { def, logMessage } from './utils';
+import { def, logMessage, throwFormilyError } from './utils';
 
 declare module '@vue/runtime-core' {
   export interface ComponentCustomProperties {
@@ -75,13 +75,13 @@ export function useFormily(options: VueFormilyOptions = {}) {
   const instance: ComponentInternalInstance | null = getCurrentInstance();
 
   if (instance == null) {
-    throw new Error(logMessage('Must be called at the top of a `setup` function'));
+    throwFormilyError(logMessage('Must be called at the top of a `setup` function'));
   }
 
   const $root = instance.proxy && instance.proxy.$root;
 
   if (!$root) {
-    throw new Error(logMessage('Unexpected error'));
+    throwFormilyError(logMessage('Unexpected error'));
   }
 
   return options ? $root.$formily : new Formily(options, $root);

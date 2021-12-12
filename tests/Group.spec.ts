@@ -17,13 +17,14 @@ describe('Group', () => {
     expect(function () {
       // eslint-disable-next-line no-new
       createGroup({ formId: 'group_test' } as any);
-    }).toThrowError('[vue-formily] (formId: "group_test") invalid schema, `fields` must be an array.');
+    }).toThrowError('[vue-formily] (formId: "group_test") `fields` must be an array.');
   });
 
   it('Can access field from index signature', () => {
     const group = createGroup(
       defineSchema({
         formId: 'group_test',
+        formType: 'group',
         rules: [
           {
             ...required,
@@ -33,6 +34,7 @@ describe('Group', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -51,6 +53,7 @@ describe('Group', () => {
   it('Can cascade rules', async () => {
     const s = defineSchema({
       formId: 'test',
+      formType: 'group',
       rules: [
         {
           ...required,
@@ -60,10 +63,12 @@ describe('Group', () => {
       ],
       fields: [
         {
-          formId: 'a'
+          formId: 'a',
+          formType: 'field'
         },
         {
           formId: 'b',
+          formType: 'field',
           rules: [
             {
               ...required,
@@ -89,6 +94,7 @@ describe('Group', () => {
     const group = createGroup(
       defineSchema({
         formId: 'group_test',
+        formType: 'group',
         rules: [
           {
             ...required,
@@ -98,6 +104,7 @@ describe('Group', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -132,6 +139,7 @@ describe('Group', () => {
     const group = createGroup(
       defineSchema({
         formId: 'group_test',
+        formType: 'group',
         rules: [
           {
             ...required,
@@ -141,6 +149,7 @@ describe('Group', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -175,6 +184,7 @@ describe('Group', () => {
     const group = createGroup(
       defineSchema({
         formId: 'group_test',
+        formType: 'group',
         rules: [
           {
             ...required,
@@ -184,6 +194,7 @@ describe('Group', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -218,6 +229,7 @@ describe('Group', () => {
     const group = createGroup(
       defineSchema({
         formId: 'group_test',
+        formType: 'group',
         rules: [
           {
             ...required,
@@ -227,6 +239,7 @@ describe('Group', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -269,6 +282,7 @@ describe('Group', () => {
   it('Can set value', async () => {
     const s = defineSchema({
       formId: 'group_test',
+      formType: 'group',
       rules: [
         {
           ...required,
@@ -278,6 +292,7 @@ describe('Group', () => {
       fields: [
         {
           formId: 'a',
+          formType: 'field',
           rules: [
             {
               ...required,
@@ -287,9 +302,11 @@ describe('Group', () => {
         },
         {
           formId: 'b',
+          formType: 'group',
           fields: [
             {
-              formId: 'c'
+              formId: 'c',
+              formType: 'field'
             }
           ]
         }
@@ -324,6 +341,7 @@ describe('Group', () => {
     const group = createGroup(
       defineSchema({
         formId: 'group_test',
+        formType: 'group',
         rules: [
           {
             ...required,
@@ -333,6 +351,7 @@ describe('Group', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -342,6 +361,7 @@ describe('Group', () => {
           },
           {
             formId: 'b',
+            formType: 'field',
             fields: [
               {
                 formId: 'c'
@@ -370,6 +390,7 @@ describe('Group', () => {
   it('Can add field', async () => {
     const group = createGroup({
       formId: 'group_test',
+      formType: 'group',
       rules: [
         {
           ...required,
@@ -378,20 +399,24 @@ describe('Group', () => {
       ],
       fields: [
         {
-          formId: 'a'
+          formId: 'a',
+          formType: 'field'
         }
       ]
     });
 
     group.addField({
       formId: 'b',
+      formType: 'field',
       value: 'bbb'
     });
     group.addField({
+      formType: 'field',
       formId: 'c'
     });
     group.addField(
       {
+        formType: 'field',
         formId: 'd'
       },
       {
@@ -409,6 +434,7 @@ describe('Group', () => {
 
     expect(() => {
       group.addField({
+        formType: 'field',
         formId: 'b'
       });
     }).toThrow();
@@ -417,6 +443,7 @@ describe('Group', () => {
   it('Can remove field', async () => {
     const group = createGroup({
       formId: 'group_test',
+      formType: 'group',
       rules: [
         {
           ...required,
@@ -425,19 +452,23 @@ describe('Group', () => {
       ],
       fields: [
         {
+          formType: 'field',
           formId: 'a'
         }
       ]
     });
 
     group.addField({
+      formType: 'field',
       formId: 'b'
     });
     group.addField({
+      formType: 'field',
       formId: 'c'
     });
     group.addField(
       {
+        formType: 'field',
         formId: 'd'
       },
       {
@@ -456,6 +487,7 @@ describe('Group', () => {
   it('Can get schema', async () => {
     const group = createGroup({
       formId: 'group_test',
+      formType: 'group',
       rules: [
         {
           ...required,
@@ -464,17 +496,19 @@ describe('Group', () => {
       ],
       fields: [
         {
-          formId: 'a'
+          formId: 'a',
+          formType: 'field'
         }
       ]
     });
 
     group.addField({
-      formId: 'b'
+      formId: 'b',
+      formType: 'field'
     });
 
     expect(JSON.stringify(group.schema)).toBe(
-      '{"formId":"group_test","rules":[{"name":"required","message":"test"}],"fields":[{"formId":"a","_is":"string"},{"formId":"b","_is":"string"}],"_is":"group"}'
+      '{"formId":"group_test","formType":"group","rules":[{"name":"required","message":"test"}],"fields":[{"formId":"a","formType":"field"},{"formId":"b","formType":"field"}]}'
     );
   });
 });

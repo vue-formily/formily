@@ -2,18 +2,17 @@ import { findIndex, isNumber } from '@vue-formily/util';
 import { RuleSchema, Validator } from './types';
 import Rule from './Rule';
 import Objeto from '../Objeto';
+import { throwFormilyError } from '@/utils';
 
-type ValitionRuleSchema = Validator | RuleSchema;
+type InternalValidationRuleSchema = Validator | RuleSchema;
 
 export default class Validation extends Objeto {
   rules: Rule[] = [];
 
-  constructor(rules?: ValitionRuleSchema[]) {
+  constructor(rules: InternalValidationRuleSchema[] = []) {
     super();
 
-    if (rules) {
-      this.addRules(rules);
-    }
+    rules.forEach(rule => this.addRule(rule));
   }
 
   get valid() {
@@ -30,31 +29,19 @@ export default class Validation extends Objeto {
     return errors.length ? errors : null;
   }
 
-  addRules(rulesOrSchemas: (Rule | ValitionRuleSchema)[], { from }: { from?: number } = {}): Rule[] {
-    from = isNumber(from) ? from++ : -Infinity;
-
-    return rulesOrSchemas.map((schema: Rule | ValitionRuleSchema) => {
-      return this.addRule(schema, { at: (from as number)++ });
-    });
-  }
-
-  removeRules(removes: (Rule | string)[]): Rule[] {
-    return removes.map(remove => this.removeRule(remove));
-  }
-
-  addRule(ruleOrSchema: Rule | ValitionRuleSchema, { at }: { at?: number } = {}): Rule {
+  addRule(ruleOrSchema: Rule | InternalValidationRuleSchema, { at }: { at?: number } = {}): Rule {
     const rule = new Rule(ruleOrSchema);
-    const currentRule = (this as any)[rule.name];
+    const name = rule.name;
 
-    if (currentRule) {
-      this.removeRule(currentRule);
+    if (name in this) {
+      throwFormilyError(`Dupplicated rule: ${name}`);
     }
 
-    const length = this.rules.length;
+    const index = isNumber(at) ? at : this.rules.length;
 
-    this.rules.splice(isNumber(at) ? at : length, 0, rule);
+    this.rules.splice(index, 0, rule);
 
-    (this as any)[rule.name] = rule;
+    (this as any)[name] = rule;
 
     return rule;
   }
@@ -69,6 +56,8 @@ export default class Validation extends Objeto {
     const [removed] = index !== -1 ? this.rules.splice(index, 1) : [];
 
     delete this[removed.name as keyof Validation];
+
+    this.emit('add', this, removed);
 
     return removed;
   }

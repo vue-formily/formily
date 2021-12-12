@@ -8,7 +8,7 @@ export type ElementOptions = {
 };
 
 export interface ElementSchema<I = string> {
-  formId?: I;
+  formId: I;
   model?: I;
   props?: Record<string, any>;
   on?: Record<string, EventHandler>;
@@ -26,11 +26,13 @@ export interface ElementData {
 export type ElementsSchemas<I = string> = FieldSchema<I> | GroupSchema<I> | CollectionSchema<I>;
 
 export interface GroupSchema<I = string> extends ElementSchema<I> {
+  formType: 'group';
   fields: ElementsSchemas<I>[];
 }
 
 export interface CollectionSchema<I = string> extends ElementSchema<I> {
-  group: Omit<GroupSchema<I>, 'formId'>;
+  formType: 'collection';
+  group: Omit<GroupSchema<I>, 'formId' | 'formType'>;
 }
 
 export type FormSchema<I = string> = GroupSchema<I>;
@@ -42,6 +44,7 @@ export type Format = string | ((field: any) => string);
 
 export interface FieldSchema<I = string> extends ElementSchema<I> {
   type?: FieldType;
+  formType: 'field';
   format?: Format;
   default?: any;
   value?: any;

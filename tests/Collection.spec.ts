@@ -7,7 +7,7 @@ const formily = createFormily();
 [Field, Collection, Group].forEach(F => formily.register(F));
 
 describe('Collection', () => {
-  const schema = { formId: 'collection_test' } as const;
+  const schema = { formId: 'collection_test', formType: 'collection' } as const;
 
   it('Throw error with invalid schema', () => {
     expect(function () {
@@ -29,6 +29,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -70,6 +71,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -86,7 +88,8 @@ describe('Collection', () => {
     let group = collection.addGroup();
 
     await group.setValue({
-      a: 'test'
+      a: 'test',
+      formtype: 'field'
     });
 
     collection.removeGroup(0);
@@ -94,7 +97,8 @@ describe('Collection', () => {
     group = collection.addGroup();
 
     await group.setValue({
-      a: 'test'
+      a: 'test',
+      formtype: 'field'
     });
 
     collection.removeGroup(group);
@@ -120,6 +124,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -160,6 +165,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -209,6 +215,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -254,6 +261,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -263,9 +271,11 @@ describe('Collection', () => {
           },
           {
             formId: 'b',
+            formType: 'group',
             fields: [
               {
-                formId: 'c'
+                formId: 'c',
+                formType: 'field'
               }
             ]
           }
@@ -319,6 +329,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -328,9 +339,11 @@ describe('Collection', () => {
           },
           {
             formId: 'b',
+            formType: 'group',
             fields: [
               {
-                formId: 'c'
+                formId: 'c',
+                formType: 'field'
               }
             ]
           }

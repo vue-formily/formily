@@ -1,8 +1,9 @@
+import { merge } from '@vue-formily/util';
 import { ElementData, ElementOptions, ElementSchema } from './types';
 import { genHtmlName, getProp, genProps } from '../../helpers';
-import { dumpProp, readonlyDumpProp } from '../../utils';
+import { dumpProp, readonlyDumpProp, throwFormilyError } from '../../utils';
 import Objeto from '../Objeto';
-import { merge } from '@vue-formily/util';
+import { Validation } from '../validations';
 
 function genElementAncestors(elem: Element): any[] | null {
   const path = [];
@@ -22,12 +23,22 @@ let _options = {
 } as ElementOptions;
 
 export default abstract class Element extends Objeto {
+  static accept(schema: any) {
+    ['formId'].forEach(prop => {
+      if (!prop) {
+        throwFormilyError(`${prop} is not defined`);
+      }
+    });
+
+    return schema;
+  }
+
   static register(options: ElementOptions) {
     _options = merge(_options, options);
   }
 
   readonly parent!: Element | null;
-  readonly model!: string;
+
   protected _d!: ElementData;
 
   props: Record<string, any> = {};
@@ -40,15 +51,15 @@ export default abstract class Element extends Objeto {
   constructor(schema: ElementSchema, parent?: Element | null) {
     super();
 
+    Element.accept(schema);
+
     this.parent = parent || null;
 
     const data = this._d;
 
     readonlyDumpProp(data, 'schema', schema);
 
-    const { model, props = {}, on = {}, options } = schema;
-
-    readonlyDumpProp(this, 'model', model || this.formId);
+    const { props = {}, on = {}, options, rules = [] } = schema;
 
     dumpProp(data, 'ancestors', genElementAncestors(this));
     dumpProp(data, 'options', merge({}, _options, options));
@@ -56,10 +67,16 @@ export default abstract class Element extends Objeto {
     this.addProps(props);
 
     Object.keys(on).map(name => this.on(name, on[name]));
+
+    this._d.validation = new Validation(rules);
+  }
+
+  get model() {
+    return this.schema.model || this.formId;
   }
 
   get schema() {
-    return this._d.schema;
+    return this.getSchema();
   }
 
   get options(): ElementOptions {
@@ -78,6 +95,10 @@ export default abstract class Element extends Objeto {
     return this.validation.errors ? this.validation.errors[0] : null;
   }
 
+  getSchema(): Record<string, any> {
+    return this._d.schema.__origin;
+  }
+
   getProps(path: string, options?: { up?: boolean }) {
     return getProp(this, path, options);
   }
@@ -87,7 +108,7 @@ export default abstract class Element extends Objeto {
   }
 
   get formId(): string {
-    return this._d.schema.formId || '' + Date.now();
+    return this.schema.formId;
   }
 
   get htmlName() {

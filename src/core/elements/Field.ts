@@ -2,9 +2,8 @@ import { isFunction, isNumeric } from '@vue-formily/util';
 import { ElementData, FieldSchema, FieldType, FieldValue } from './types';
 
 import Element from './Element';
-import { logMessage, toString, readonlyDumpProp, isUndefined } from '../../utils';
-import Validation from '../validations/Validation';
-import { normalizeRules, getSchemaAcceptance, invalidateSchemaValidation, acceptSchema } from '../../helpers';
+import { toString, readonlyDumpProp, isUndefined, throwFormilyError } from '../../utils';
+import { normalizeSchema } from '../../helpers';
 
 type FieldData = ElementData & {
   error: string | null;
@@ -58,50 +57,29 @@ export default class Field extends Element {
   static FIELD_TYPE_BOOLEAN = 'boolean';
   static FIELD_TYPE_DATE = 'date';
 
-  static accept(schema: any) {
+  static accept(schema: any): FieldSchema {
     const { type: schemaType, formId } = schema;
     const type: FieldType = schemaType ? (Field as any)[`FIELD_TYPE_${schemaType.toUpperCase()}`] : 'string';
 
-    const { accepted, sv } = getSchemaAcceptance(schema, type);
-
-    if (!accepted) {
-      if (!type) {
-        invalidateSchemaValidation(sv, 'Invalid `type`', { formId });
-      }
-
-      if (sv.valid) {
-        acceptSchema(schema, type);
-      }
+    if (!type) {
+      throwFormilyError('Invalid `type`', { formId });
     }
 
-    return sv;
+    return normalizeSchema(schema, type);
   }
 
   static create(schema: FieldSchema, parent?: Element | null): Field {
     return new Field(schema, parent);
   }
 
-  readonly formType!: string;
-  readonly type!: FieldType;
   readonly default!: any;
 
   protected _d!: FieldData;
 
   constructor(schema: FieldSchema, parent?: Element | null) {
-    super(schema, parent);
+    super(Field.accept(schema), parent);
 
-    const accepted = Field.accept(schema);
-
-    if (!accepted.valid) {
-      throw new Error(logMessage(`[Schema error] ${accepted.reason}`, accepted.infos));
-    }
-
-    const { type, rules, default: defu } = schema;
-
-    readonlyDumpProp(this, 'formType', FORM_TYPE);
-    readonlyDumpProp(this, 'type', type || 'string');
-
-    this._d.validation = new Validation(normalizeRules(rules, this.type));
+    const { default: defu } = schema;
 
     const hasDefault = !isUndefined(defu);
     readonlyDumpProp(this, 'default', hasDefault ? defu : null);
@@ -117,6 +95,14 @@ export default class Field extends Element {
     this.setCheckedValue(schema.checkedValue);
 
     this.setValue(value);
+  }
+
+  get formType() {
+    return FORM_TYPE;
+  }
+
+  get type(): FieldType {
+    return this.schema.type || 'string';
   }
 
   get pending() {

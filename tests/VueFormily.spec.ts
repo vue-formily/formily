@@ -30,9 +30,11 @@ describe('VueFormily', () => {
 
           formily.addForm({
             formId: 'form',
+            formType: 'group',
             fields: [
               {
                 formId: 'a',
+                formType: 'field',
                 format: 'test'
               }
             ]
@@ -65,9 +67,11 @@ describe('VueFormily', () => {
 
     const form = wrapper.vm.$formily.addForm({
       formId: 'form',
+      formType: 'group',
       fields: [
         {
           formId: 'a',
+          formType: 'field',
           format: 'test'
         }
       ]
@@ -120,9 +124,11 @@ describe('VueFormily', () => {
 
     const form = wrapper.vm.$formily.addForm({
       formId: 'form',
+      formType: 'group',
       fields: [
         {
           formId: 'a',
+          formType: 'field',
           format: 'test',
           rules: [required]
         }
@@ -177,9 +183,11 @@ describe('VueFormily', () => {
     const form = wrapper.vm.$formily.addForm(
       defineSchema({
         formId: 'form',
+        formType: 'group',
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             value: 'test',
             format: 'format'
           }
@@ -219,9 +227,11 @@ describe('VueFormily', () => {
     const form = wrapper.vm.$formily.addForm(
       defineSchema({
         formId: 'form',
+        formType: 'group',
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             format: 'format',
             value: 'test'
           }
@@ -261,9 +271,11 @@ describe('VueFormily', () => {
     const form = wrapper.vm.$formily.addForm(
       defineSchema({
         formId: 'form',
+        formType: 'group',
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             format: 'format',
             value: '2021/12/01',
             type: 'date'
@@ -325,6 +337,7 @@ describe('VueFormily', () => {
   test('Reactivity', async () => {
     const schema = defineSchema({
       formId: 'test',
+      formType: 'group',
       fields: [
         {
           formId: 'field',
@@ -338,10 +351,11 @@ describe('VueFormily', () => {
         },
         {
           formId: 'group',
+          formType: 'group',
           rules: [
             {
               name: 'test',
-              validator(value, props, group) {
+              validator(_value: any, _props: any, group: any) {
                 return group.$field.value !== '2';
               }
             }
@@ -349,6 +363,7 @@ describe('VueFormily', () => {
           fields: [
             {
               formId: 'field',
+              formType: 'field',
               value: 0,
               dasdas: 'saddas'
             }
@@ -411,6 +426,7 @@ describe('VueFormily', () => {
     // add new field
     test.addField({
       formId: 'added',
+      formType: 'field',
       value: 'added'
     });
 
