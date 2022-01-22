@@ -11,8 +11,14 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo "Releasing $VERSION ..."
 
-  # # build
+  # test
+  npm run test
+
+  # build
   VERSION=$VERSION npm run build
+
+  # generate release note
+  VERSION=$VERSION npm run release:note
 
   # # publish
   if [[ -z $TAG ]]; then
@@ -20,7 +26,4 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   else
     np $VERSION --branch $BRANCH --tag $TAG --message "build: release $VERSION"
   fi
-
-  # generate release note
-  VERSION=$VERSION npm run release:note
 fi
