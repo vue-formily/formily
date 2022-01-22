@@ -1,18 +1,12 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
-import { CollectionSchema, ElementData } from './types';
+import { CollectionSchema, GroupSchema, ElementData } from './types';
 import Element from './Element';
 import Group from './Group';
-import {
-  acceptSchema,
-  cascadeRules,
-  getSchemaAcceptance,
-  invalidateSchemaValidation,
-  normalizeRules
-} from '../../helpers';
-import { logMessage, readonlyDumpProp, readonlyDef } from '../../utils';
-import Validation from '../validations/Validation';
+import { cascadeRule, normalizeSchema } from '../../helpers';
+import { logMessage, readonlyDef, throwFormilyError } from '../../utils';
 
 const FORM_TYPE = 'collection';
+const TYPE = 'set';
 
 export class CollectionItem extends Group {
   get index() {
@@ -61,56 +55,38 @@ async function onCollectionChanged(this: Collection, ...args: any[]) {
 export default class Collection extends Element {
   static FORM_TYPE = FORM_TYPE;
 
-  static accept(schema: any) {
-    const { accepted, sv } = getSchemaAcceptance(schema, FORM_TYPE);
+  static accept(schema: any): CollectionSchema {
+    const { formId, group } = schema;
 
-    if (!accepted) {
-      const { formId, group } = schema;
-
-      if (!isPlainObject(group)) {
-        invalidateSchemaValidation(sv, '`group` must be an object', { formId });
-      }
-
-      if (sv.valid) {
-        acceptSchema(schema, FORM_TYPE);
-      }
+    if (!isPlainObject(group)) {
+      throwFormilyError('`group` must be an object', { formId });
     }
 
-    return sv;
+    return normalizeSchema(schema, TYPE);
   }
 
   static create(schema: CollectionSchema, parent?: Element | null) {
     return new Collection(schema, parent);
   }
 
-  readonly formType!: string;
-  readonly type!: 'set';
-
   protected _d!: CollectionData;
 
   groups: CollectionItem[] | null;
 
   constructor(schema: CollectionSchema, parent?: Element | null) {
-    super(schema, parent);
-
-    const accepted = Collection.accept(schema);
-
-    if (!accepted.valid) {
-      throw new Error(logMessage(accepted.reason, accepted.infos));
-    }
-
-    readonlyDumpProp(this, 'formType', FORM_TYPE);
-    readonlyDumpProp(this, 'type', 'set');
-
-    this._d.validation = new Validation(normalizeRules(schema.rules, this.type));
+    super(Collection.accept(schema), parent);
 
     this._d.value = null;
 
     this.groups = null;
+  }
 
-    if (schema.rules) {
-      schema.group.fields = cascadeRules(schema.rules, schema.group.fields);
-    }
+  get type() {
+    return TYPE;
+  }
+
+  get formType() {
+    return FORM_TYPE;
   }
 
   get pending() {
@@ -123,7 +99,7 @@ export default class Collection extends Element {
 
   async setValue(value: any[], { from = 0, autoAdd = true }: { from?: number; autoAdd?: boolean } = {}) {
     if (!Array.isArray(value)) {
-      throw new Error(logMessage('Invalid value, Group value must be an object'));
+      throwFormilyError(logMessage('Invalid value, Group value must be an object'));
     }
 
     const groups = this.groups ? this.groups.slice(from) : [];
@@ -178,7 +154,18 @@ export default class Collection extends Element {
       this.groups = [];
     }
 
-    const groupItem = new CollectionItem(this._d.schema.group, this);
+    const { rules, group } = this._d.schema;
+
+    const groupItem = new CollectionItem(
+      cascadeRule(
+        {
+          formType: 'group',
+          ...group
+        } as GroupSchema,
+        rules
+      ),
+      this
+    );
 
     this.groups.push(groupItem);
 

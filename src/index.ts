@@ -16,9 +16,18 @@ declare module 'vue/types/vue' {
 }
 
 const _configs = new WeakMap();
+const simpleApp = {
+  set(context: Record<string, any>, prop: string, value: any) {
+    context[prop] = value;
+  },
+  delete(context: Record<string, any>, prop: string) {
+    delete context[prop];
+  }
+};
 
 function createFormily() {
   const config = {
+    app: simpleApp,
     plugs: {},
     elements: []
   } as VueFormilyConfig;
@@ -41,6 +50,8 @@ function createFormily() {
     install(app: VueConstructor, options: VueFormilyOptions = {}) {
       // initialize default form elements
       [Field, Collection, Group].forEach(F => this.register(F, options));
+
+      config.app = app;
 
       app.mixin({
         beforeCreate(this: any) {

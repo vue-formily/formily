@@ -2,65 +2,50 @@ import { ElementsSchemas } from '../core/elements/types';
 import { findIndex, get, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
 import { ValidationRuleSchema, Validator } from '../core/validations/types';
 
-import { logMessage, isUndefined, def } from '../utils';
+import { isUndefined, def, throwFormilyError } from '../utils';
 
-export function genFields(fields: ElementsSchemas[], parent: any, ...args: any[]) {
+export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {
   const elements = parent._config.elements;
+  const element = elements.find((e: any) => e.FORM_TYPE === schema.formType);
   const length = elements.length;
-  let invalidSchema: any;
+  const { formId } = schema;
 
   if (!length) {
-    throw new Error(logMessage('No form elements have been registed yet'));
+    throwFormilyError('No form elements have been registed yet');
+  } else if (!element) {
+    throwFormilyError('`formType` is not defined or supported', {
+      formId
+    });
   }
 
-  return fields.map(schema => {
-    for (let i = 0; i < length; i++) {
-      const F = elements[i];
-      const accepted = F.accept(schema);
-
-      if (accepted.valid) {
-        return F.create(schema, parent, ...args);
-      }
-
-      invalidSchema = schema;
-    }
-
-    throw new Error(
-      logMessage(
-        `Failed to create form elmenent, caused by schema:\n ${JSON.stringify(invalidSchema, null, 2).slice(
-          0,
-          50
-        )}\n\t...\n`
-      )
-    );
-  });
+  return element.create(schema, parent, ...args);
 }
 
-export function cascadeRules(parentRules: ValidationRuleSchema[], fields: ElementsSchemas[]) {
-  return parentRules
-    ? fields.map(fieldSchema => {
-        const { rules = [] } = fieldSchema;
+export function cascadeRule<T extends ElementsSchemas>(fieldSchema: T, parentRules?: ValidationRuleSchema[]): T {
+  const schema = merge({}, fieldSchema);
 
-        parentRules.forEach(parentRule => {
-          const index = findIndex(rules as any, (rule: any) => rule.name === parentRule.name);
-          const rule = rules[index];
+  if (parentRules) {
+    const { rules = [] } = schema;
 
-          if (
-            !isFunction(parentRule) &&
-            parentRule.cascade &&
-            (!rule || (rule as Exclude<ValidationRuleSchema, Validator>).inherit !== false)
-          ) {
-            rules[index < 0 ? 0 : index] = merge({}, parentRule, rule);
-          }
-        });
+    parentRules.forEach(parentRule => {
+      const index = findIndex(rules as any, (rule: any) => rule.name === parentRule.name);
+      const rule = rules[index];
 
-        if (rules.length) {
-          fieldSchema.rules = rules;
-        }
+      if (
+        !isFunction(parentRule) &&
+        parentRule.cascade &&
+        (!rule || (rule as Exclude<ValidationRuleSchema, Validator>).inherit !== false)
+      ) {
+        rules[index < 0 ? 0 : index] = merge({}, parentRule, rule);
+      }
+    });
 
-        return fieldSchema;
-      })
-    : fields;
+    if (rules.length) {
+      schema.rules = rules;
+    }
+  }
+
+  return schema;
 }
 
 export function genHtmlName(Element: any, ancestors: any[] | null): string {
@@ -105,4 +90,18 @@ export function genProps(this: any, source: Record<string, any>, properties: any
   }
 
   return source;
+}
+
+export function normalizeSchema(schema: ElementsSchemas, type: string) {
+  const rules = (schema.rules || []).filter(rule => isFunction(rule) || !rule.for || (type && rule.for.includes(type)));
+
+  return merge(
+    {
+      __origin: schema
+    },
+    schema,
+    {
+      rules
+    }
+  );
 }

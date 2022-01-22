@@ -19,21 +19,25 @@ describe('Field', () => {
   it('Can cast', async () => {
     const f1 = new Field({
       formId: 'field_name',
+      formType: 'field',
       type: 'number',
       value: '1'
     });
     const f2 = new Field({
       formId: 'field_name',
+      formType: 'field',
       type: 'string',
       value: 123
     });
     const f3 = new Field({
       formId: 'field_name',
+      formType: 'field',
       type: 'boolean',
       value: 'true'
     });
     const f4 = new Field({
       formId: 'field_name',
+      formType: 'field',
       type: 'date',
       value: '2020/12/3'
     });
@@ -75,6 +79,7 @@ describe('Field', () => {
   it('Can format', async () => {
     const f1 = new Field({
       formId: 'field_name',
+      formType: 'field',
       type: 'string',
       format: 'test test',
       value: 'test',
@@ -103,6 +108,7 @@ describe('Field', () => {
   it('Can override default rules', async () => {
     const f = new Field({
       formId: 'field_name',
+      formType: 'field',
       type: 'number'
     });
 
@@ -123,6 +129,7 @@ describe('Field', () => {
   it('Can be shaked', async () => {
     const f = new Field({
       formId: 'field_name',
+      formType: 'field',
       rules: [
         {
           name: 'test',
@@ -146,6 +153,7 @@ describe('Field', () => {
   it('Can turn off silent', async () => {
     const f = new Field({
       formId: 'field_name',
+      formType: 'field',
       options: {
         silent: false
       },
@@ -160,6 +168,7 @@ describe('Field', () => {
   it('Can reset', async () => {
     const f = new Field({
       formId: 'field_name',
+      formType: 'field',
       value: '',
       default: 'test',
       rules: [
@@ -187,6 +196,7 @@ describe('Field', () => {
   it('Can clean up', async () => {
     const f = new Field({
       formId: 'field_name',
+      formType: 'field',
       value: '',
       rules: [
         {
@@ -212,6 +222,7 @@ describe('Field', () => {
   it('Can clear', async () => {
     const f = new Field({
       formId: 'field_name',
+      formType: 'field',
       value: '',
       rules: [
         {
@@ -239,6 +250,7 @@ describe('Field', () => {
   it('Should has checked property', async () => {
     const f = new Field({
       formId: 'field_name',
+      formType: 'field',
       checkedValue: 'test'
     });
 

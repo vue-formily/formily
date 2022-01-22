@@ -31,6 +31,9 @@ Simple, lightweight, and flexible schema-based form for Vue.js
 You can use **vue-formily** with a script tag and a CDN, import the library like this:
 
 ```html
+<!-- vue 3.x -->
+<script src="https://unpkg.com/@vue-formily/formily@next"></script>
+<!-- vue 2.x -->
 <script src="https://unpkg.com/@vue-formily/formily@latest"></script>
 ```
 
@@ -40,6 +43,9 @@ If you are using native ES Modules, there is also an ES Modules compatible build
 
 ```html
 <script type="module">
+  // vue 3.x
+  import Vue from 'https://unpkg.com/@vue-formily/formily@next/dist/formily.esm.js'
+  // vue 2.x
   import Vue from 'https://unpkg.com/@vue-formily/formily@latest/dist/formily.esm.js'
 </script>
 ```
@@ -47,9 +53,15 @@ If you are using native ES Modules, there is also an ES Modules compatible build
 ### NPM
 ```sh
 # install with yarn
+# vue 3.x
+yarn add @vue-formily/formily@next
+# vue 2.x
 yarn add @vue-formily/formily
 
 # install with npm
+# vue 3.x
+npm install @vue-formily/formily@next --save
+# vue 2.x
 npm install @vue-formily/formily --save
 ```
 
@@ -84,9 +96,11 @@ app.use(formily, {
 #### Vue 2.x
 ```typescript
 import Vue from 'vue';
-import VueFormily from '@vue-formily/formily';
+import { createFormily } from '@vue-formily/formily';
 
-Vue.use(VueFormily, {
+const formily = createFormily();
+
+Vue.use(formily, {
   // By default, vue-formily will execute the 
   // validation silently when changing element's value.
   // To disable it, just set the `silent` to `false`.
@@ -120,43 +134,52 @@ Let's start with a simple login form:
 `vue-formily` need a form schema to work with, so let's define one:
 
 ```js
-const loginForm = {
-  formId: "login",
-  fields: [
-    {
-      formId: "email",
-      type: "string",
-      rules: [
-        {
-          ...required,
-          message: "Please enter email address.",
-        },
-        {
-          ...email,
-          message: "Please enter valid email address.",
-        },
-      ],
-      props: {
-        label: "email",
-        inputType: "email"
+import { defineSchema } from '@vue-formily';
+import { required, email } from "@vue-formily/rules";
+
+const loginForm = defineSchema({
+    formId: 'login',
+    formType: 'group',
+    fields: [
+      {
+        formId: 'email',
+        formType: 'field',
+        type: 'string',
+        format: '{raw}',
+        value: '',
+        rules: [
+          {
+            ...required,
+            message: 'Please enter email address.'
+          },
+          {
+            ...email,
+            message: 'Please enter valid email address.'
+          }
+        ],
+        props: {
+          label: 'email',
+          inputType: 'email'
+        }
       },
-    },
-    {
-      formId: "password",
-      type: "string",
-      rules: [
-        {
-          ...required,
-          message: "Please enter password.",
-        },
-      ],
-      props: {
-        label: "password",
-        inputType: "password"
-      },
-    },
-  ],
-};
+      {
+        formId: 'password',
+        formType: 'field',
+        type: 'string',
+        rules: [
+          {
+            ...required,
+            message: 'Please enter password.'
+          }
+        ],
+        value: '',
+        props: {
+          label: 'password',
+          inputType: 'password'
+        }
+      }
+    ]
+  });
 ```
 
 ### Create New Form
@@ -166,17 +189,29 @@ Then we call [`$formily.add`](https://vue-formily.netlify.app/api/extension#addf
 <template>
   <form class="login">
     <div v-for="(field, i) in forms.login.fields" :key="i" class="field">
-      <label :for="field._uid">{{ field.label }}</label>
-      <input v-model="field.raw" :type="field.props.inputType" :name="field.name" :id="field._uid" />
+      <label :for="field.formId">{{ field.label }}</label>
+      <input v-model="field.raw" :type="field.props.inputType" :name="field.name" :id="field.formId" />
     </div>
   </form>
 </template>
 
 <script>
+//  Vue 2.x
 export default {
   created() {
     // Create new form element and injects it to `forms` object.
     this.$formily.add(loginForm);
+  }
+}
+
+// Vue 3.x
+import { useFormily } from '@vue-formily';
+
+export default {
+  setup() {
+    const formily = useFormily();
+    // Create newå form element and injects it to `forms` object.
+    formily.add(loginForm);
   }
 }
 </script>

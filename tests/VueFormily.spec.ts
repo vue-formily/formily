@@ -41,9 +41,11 @@ describe('VueFormily', () => {
 
     const form = wrapper.vm.$formily.addForm({
       formId: 'form',
+      formType: 'group',
       fields: [
         {
           formId: 'a',
+          formType: 'field',
           format: 'test'
         }
       ]
@@ -86,9 +88,11 @@ describe('VueFormily', () => {
 
     const form = wrapper.vm.$formily.addForm({
       formId: 'form',
+      formType: 'group',
       fields: [
         {
           formId: 'a',
+          formType: 'field',
           format: 'test',
           rules: [required]
         }
@@ -135,19 +139,23 @@ describe('VueFormily', () => {
       }
     );
 
-    const form = wrapper.vm.$formily.addForm({
-      formId: 'form',
-      fields: [
-        {
-          formId: 'a',
-          value: 'test',
-          format: 'format'
-        }
-      ]
-    });
+    const form = wrapper.vm.$formily.addForm(
+      defineSchema({
+        formId: 'form',
+        formType: 'group',
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            value: 'test',
+            format: 'format'
+          }
+        ]
+      })
+    );
 
     form.on('validated', () => {
-      expect(form.a.formatted).toBe('format test');
+      expect(form.$a.formatted).toBe('format test');
     });
   });
 
@@ -175,19 +183,23 @@ describe('VueFormily', () => {
       }
     );
 
-    const form = wrapper.vm.$formily.addForm({
-      formId: 'form',
-      fields: [
-        {
-          formId: 'a',
-          format: 'format',
-          value: 'test'
-        }
-      ]
-    });
+    const form = wrapper.vm.$formily.addForm(
+      defineSchema({
+        formId: 'form',
+        formType: 'group',
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            format: 'format',
+            value: 'test'
+          }
+        ]
+      })
+    );
 
     form.on('validated', () => {
-      expect(form.a.formatted).toBe('format test');
+      expect(form.$a.formatted).toBe('format test');
     });
   });
 
@@ -215,20 +227,24 @@ describe('VueFormily', () => {
       }
     );
 
-    const form = wrapper.vm.$formily.addForm({
-      formId: 'form',
-      fields: [
-        {
-          formId: 'a',
-          format: 'format',
-          value: '2021/12/01',
-          type: 'date'
-        }
-      ]
-    });
+    const form = wrapper.vm.$formily.addForm(
+      defineSchema({
+        formId: 'form',
+        formType: 'group',
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            format: 'format',
+            value: '2021/12/01',
+            type: 'date'
+          }
+        ]
+      })
+    );
 
     const mockFn = jest.fn(() => {
-      expect(form.a.formatted).toBe('format 2021');
+      expect(form.$a.formatted).toBe('format 2021');
     });
 
     form.on('validated', mockFn);
@@ -282,6 +298,7 @@ describe('VueFormily', () => {
 
     const schema = defineSchema({
       formId: 'test',
+      formType: 'group',
       fields: [
         {
           formId: 'field',
@@ -295,21 +312,36 @@ describe('VueFormily', () => {
         },
         {
           formId: 'group',
+          formType: 'group',
           rules: [
             {
               name: 'test',
-              validator(value, props, group) {
-                return group.field.value !== '2';
+              validator(_value: any, _props: any, group: any) {
+                return group.$field.value !== '2';
               }
             }
           ],
           fields: [
             {
               formId: 'field',
+              formType: 'field',
               value: 0,
               dasdas: 'saddas'
             }
           ]
+        },
+        {
+          formId: 'collection',
+          formType: 'collection',
+          group: {
+            fields: [
+              {
+                formId: 'test',
+                formType: 'field',
+                value: 'group 1'
+              }
+            ]
+          }
         }
       ]
     });
@@ -332,7 +364,15 @@ describe('VueFormily', () => {
                 id: 'test'
               }
             },
-            [form.field.props.test, ' - ', form.group.value ? form.group.value.field : '']
+            [
+              form.$field.props.test,
+              ' - ',
+              form.$group.value ? form.$group.value.field : '',
+              (form as any).$added ? (form as any).$added.value : '',
+              (form as any).$collection && (form as any).$collection.groups
+                ? (form as any).$collection.groups[0].$test.value
+                : ''
+            ]
           );
         }
       },
@@ -347,17 +387,42 @@ describe('VueFormily', () => {
 
     const test = (wrapper.vm.forms.test as unknown) as TestForm;
 
-    test.field.raw = 1;
-    test.group.field.raw = 1;
+    test.$field.raw = 1;
+    test.$group.$field.raw = 1;
 
     await flushPromises();
 
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - 1');
 
-    test.group.field.raw = 2;
+    test.$group.$field.raw = 2;
 
     await flushPromises();
 
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - ');
+
+    // add new field
+    test.addField({
+      formId: 'added',
+      formType: 'field',
+      value: 'added'
+    });
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - added');
+
+    // remove added field
+    test.removeField('added');
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - ');
+
+    // add new group
+    test.$collection.addGroup();
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - group 1');
   });
 });

@@ -7,7 +7,7 @@ const formily = createFormily();
 [Field, Collection, Group].forEach(F => formily.register(F));
 
 describe('Collection', () => {
-  const schema = { formId: 'collection_test' } as const;
+  const schema = { formId: 'collection_test', formType: 'collection' } as const;
 
   it('Throw error with invalid schema', () => {
     expect(function () {
@@ -29,6 +29,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -53,8 +54,8 @@ describe('Collection', () => {
     });
 
     expect(collection.groups?.length).toBe(2);
-    expect((collection.groups as any)[1].a).toBeInstanceOf(Field);
-    expect((collection.groups as any)[1].a.value).toBe('test');
+    expect((collection.groups as any)[1].$a).toBeInstanceOf(Field);
+    expect((collection.groups as any)[1].$a.value).toBe('test');
   });
 
   it('Can remove group', async () => {
@@ -70,6 +71,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -86,7 +88,8 @@ describe('Collection', () => {
     let group = collection.addGroup();
 
     await group.setValue({
-      a: 'test'
+      a: 'test',
+      formtype: 'field'
     });
 
     collection.removeGroup(0);
@@ -94,7 +97,8 @@ describe('Collection', () => {
     group = collection.addGroup();
 
     await group.setValue({
-      a: 'test'
+      a: 'test',
+      formtype: 'field'
     });
 
     collection.removeGroup(group);
@@ -120,6 +124,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -160,6 +165,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -181,7 +187,7 @@ describe('Collection', () => {
 
     expect(collection.valid).toBe(false);
     expect(collection.error).toBe('test');
-    expect((collection.groups as any)[0].a.error).toBe('abc');
+    expect((collection.groups as any)[0].$a.error).toBe('abc');
 
     collection = Collection.create(s);
 
@@ -193,7 +199,7 @@ describe('Collection', () => {
 
     expect(collection.valid).toBe(false);
     expect(collection.error).toBe('test');
-    expect((collection.groups as any)[0].a.error).toBe(null);
+    expect((collection.groups as any)[0].$a.error).toBe(null);
   });
 
   it('Can reset', async () => {
@@ -209,6 +215,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -232,13 +239,13 @@ describe('Collection', () => {
 
     collection.shake();
 
-    expect((collection.groups as any)[0].a.valid).toBe(false);
-    expect((collection.groups as any)[0].a.error).toBe('abc');
+    expect((collection.groups as any)[0].$a.valid).toBe(false);
+    expect((collection.groups as any)[0].$a.error).toBe('abc');
 
     collection.reset();
 
     expect(collection.valid).toBe(true);
-    expect((collection.groups as any)[0].a.valid).toBe(true);
+    expect((collection.groups as any)[0].$a.valid).toBe(true);
   });
 
   it('Can set value', async () => {
@@ -254,6 +261,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -263,9 +271,11 @@ describe('Collection', () => {
           },
           {
             formId: 'b',
+            formType: 'group',
             fields: [
               {
-                formId: 'c'
+                formId: 'c',
+                formType: 'field'
               }
             ]
           }
@@ -319,6 +329,7 @@ describe('Collection', () => {
         fields: [
           {
             formId: 'a',
+            formType: 'field',
             rules: [
               {
                 ...required,
@@ -328,9 +339,11 @@ describe('Collection', () => {
           },
           {
             formId: 'b',
+            formType: 'group',
             fields: [
               {
-                formId: 'c'
+                formId: 'c',
+                formType: 'field'
               }
             ]
           }

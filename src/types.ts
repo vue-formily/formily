@@ -1,6 +1,7 @@
 import { Plugs } from './core/plugs';
 
 export type VueFormilyConfig = {
+  app: any;
   plugs: Plugs;
   elements: any[];
 };
