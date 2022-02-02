@@ -1,25 +1,7 @@
 import { ElementsSchemas } from '../core/elements/types';
 import { findIndex, get, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
 import { ValidationRuleSchema, Validator } from '../core/validations/types';
-
-import { isUndefined, def, throwFormilyError } from '../utils';
-
-export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {
-  const elements = parent._config.elements;
-  const element = elements.find((e: any) => e.FORM_TYPE === schema.formType);
-  const length = elements.length;
-  const { formId } = schema;
-
-  if (!length) {
-    throwFormilyError('No form elements have been registed yet');
-  } else if (!element) {
-    throwFormilyError('`formType` is not defined or supported', {
-      formId
-    });
-  }
-
-  return element.create(schema, parent, ...args);
-}
+import { isUndefined, def } from '../utils';
 
 export function cascadeRule<T extends ElementsSchemas>(fieldSchema: T, parentRules?: ValidationRuleSchema[]): T {
   const schema = merge({}, fieldSchema);
@@ -36,7 +18,14 @@ export function cascadeRule<T extends ElementsSchemas>(fieldSchema: T, parentRul
         parentRule.cascade &&
         (!rule || (rule as Exclude<ValidationRuleSchema, Validator>).inherit !== false)
       ) {
-        rules[index < 0 ? 0 : index] = merge({}, parentRule, rule);
+        rules[index < 0 ? 0 : index] = merge(
+          {
+            __cascaded: true,
+            __origin: rule
+          },
+          parentRule,
+          rule
+        );
       }
     });
 

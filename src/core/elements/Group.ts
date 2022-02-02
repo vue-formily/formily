@@ -1,7 +1,7 @@
 import { findIndex, isNumber, isPlainObject } from '@vue-formily/util';
 import { ElementData, GroupSchema, ElementsSchemas } from './types';
 
-import { cascadeRule, genField, normalizeSchema } from '../../helpers';
+import { cascadeRule, normalizeSchema } from '../../helpers';
 import Element from './Element';
 import { readonlyDef, throwFormilyError } from '../../utils';
 
@@ -39,6 +39,23 @@ async function onFieldChanged(this: Group, ...args: any[]) {
   }
 
   this.emit('changed', this, ...args);
+}
+
+export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {
+  const elements = parent._config.elements;
+  const element = elements.find((e: any) => e.FORM_TYPE === schema.formType);
+  const length = elements.length;
+  const { formId } = schema;
+
+  if (!length) {
+    throwFormilyError('No form elements have been registed yet');
+  } else if (!element) {
+    throwFormilyError('`formType` is not defined or supported', {
+      formId
+    });
+  }
+
+  return element.create(schema, parent, ...args);
 }
 
 export default class Group extends Element {
@@ -154,15 +171,18 @@ export default class Group extends Element {
     return field;
   }
 
-  removeField(elementOrId: Record<string, any> | string) {
+  removeField(elementOrId: Record<string, any> | string): Element | null {
     const formId = isPlainObject(elementOrId) ? elementOrId.formId : elementOrId;
     const index = findIndex(this.fields, field => field.formId === formId);
+    let removed = null;
 
     if (index !== -1) {
-      const [field] = this.fields.splice(index, 1);
+      [removed] = this.fields.splice(index, 1);
 
-      (this._config as any).app.delete(this, genFieldProp(field));
+      (this._config as any).app.delete(this, genFieldProp(removed));
     }
+
+    return removed;
   }
 
   async validate({ cascade = true }: { cascade?: boolean } = {}) {

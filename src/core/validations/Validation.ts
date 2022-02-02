@@ -2,7 +2,7 @@ import { findIndex, isNumber } from '@vue-formily/util';
 import { RuleSchema, Validator } from './types';
 import Rule from './Rule';
 import Objeto from '../Objeto';
-import { throwFormilyError } from '@/utils';
+import { isUndefined, throwFormilyError } from '@/utils';
 
 type InternalValidationRuleSchema = Validator | RuleSchema;
 
@@ -27,6 +27,22 @@ export default class Validation extends Objeto {
     const errors = this.rules.map(rule => rule.error).filter(error => error);
 
     return errors.length ? errors : null;
+  }
+
+  get schema() {
+    return this.getSchema();
+  }
+
+  getSchema() {
+    const filtered = this.rules
+      .map(rule => {
+        const schema = rule.getSchema();
+
+        return (schema as any).__cascaded ? ((schema as any).__origin as RuleSchema | undefined) : schema;
+      })
+      .filter(schema => !isUndefined(schema));
+
+    return filtered.length ? filtered : null;
   }
 
   addRule(ruleOrSchema: Rule | InternalValidationRuleSchema, { at }: { at?: number } = {}): Rule {

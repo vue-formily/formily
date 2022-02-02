@@ -96,7 +96,16 @@ export default abstract class Element extends Objeto {
   }
 
   getSchema(): Record<string, any> {
-    return this._d.schema.__origin;
+    const schema = this._d.schema.__origin;
+    const rules = this.validation.getSchema();
+
+    if (rules) {
+      schema.rules = rules;
+    } else {
+      delete schema.rules;
+    }
+
+    return schema;
   }
 
   getProps(path: string, options?: { up?: boolean }) {

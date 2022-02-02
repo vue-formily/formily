@@ -43,7 +43,7 @@ describe('Collection', () => {
 
     const collection = Collection.create(s);
 
-    expect(collection.groups).toBe(null);
+    expect(collection.groups).toBeInstanceOf(Array);
 
     collection.addGroup();
 
@@ -109,6 +109,115 @@ describe('Collection', () => {
 
       collection.off('validated');
     });
+  });
+
+  it('Can add field', async () => {
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
+
+    collection.addGroup();
+    collection.addField({
+      formId: 'added',
+      formType: 'field'
+    });
+
+    expect((collection.groups[0] as any).$added).toBeInstanceOf(Field);
+  });
+
+  it('Can remove field', async () => {
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
+
+    collection.addGroup();
+    collection.removeField('a');
+
+    expect((collection.groups[0] as any).$a).toBe(undefined);
+  });
+
+  it('Can get schema', async () => {
+    const s = defineSchema({
+      ...schema,
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
+    let newSchema = collection.getSchema();
+
+    expect(newSchema).toBe(s);
+
+    collection.addField({
+      formId: 'added',
+      formType: 'field'
+    });
+
+    newSchema = collection.getSchema();
+
+    expect(newSchema).toBe(s);
   });
 
   it('Can validate', async () => {

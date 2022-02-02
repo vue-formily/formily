@@ -7,7 +7,12 @@ import Objeto from '../Objeto';
 type RuleData = {
   error: string | null;
   valid: boolean;
+  schema: RuleSchema | Validator;
 };
+
+function isRule(input: Rule | RuleSchema | Validator): input is Rule {
+  return input instanceof Rule;
+}
 
 export default class Rule extends Objeto {
   readonly name!: string;
@@ -18,11 +23,12 @@ export default class Rule extends Objeto {
   constructor(rule: Rule | RuleSchema | Validator) {
     super();
 
+    const data = this._d;
+
+    readonlyDumpProp(data, 'schema', isRule(rule) ? rule.getSchema() : rule);
     readonlyDumpProp(this, 'name', rule.name || Date.now());
 
     dumpProp(this, 'message', null);
-
-    const data = this._d;
 
     data.error = null;
     data.valid = true;
@@ -42,6 +48,14 @@ export default class Rule extends Objeto {
 
   get error() {
     return this._d.error;
+  }
+
+  get schema() {
+    return this.getSchema();
+  }
+
+  getSchema(): RuleSchema | Validator {
+    return this._d.schema;
   }
 
   setMessage(message: string | null = null) {
