@@ -368,6 +368,19 @@ describe('VueFormily', () => {
               dasdas: 'saddas'
             }
           ]
+        },
+        {
+          formId: 'collection',
+          formType: 'collection',
+          group: {
+            fields: [
+              {
+                formId: 'test',
+                formType: 'field',
+                value: 'group 1'
+              }
+            ]
+          }
         }
       ]
     });
@@ -381,7 +394,8 @@ describe('VueFormily', () => {
           this.$formily.addForm(schema);
         },
         render() {
-          const form = this.$formily.getForm<TestForm>('test');
+          const form = (this as any).$formily.getForm('test') as TestForm;
+          const group0 = (form as any).$collection && (form as any).$collection.groups[0];
 
           return h(
             'div',
@@ -392,7 +406,9 @@ describe('VueFormily', () => {
               form.$field.props.test,
               ' - ',
               form.$group.value ? form.$group.value.field : '',
-              (form as any).$added ? (form as any).$added.value : ''
+              (form as any).$added ? (form as any).$added.value : '',
+              group0 ? group0.$test.value : '',
+              group0 && group0.$added ? group0.$added.value : ''
             ]
           );
         }
@@ -440,5 +456,30 @@ describe('VueFormily', () => {
     await flushPromises();
 
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - ');
+
+    // add new group
+    test.$collection.addGroup();
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - group 1');
+
+    // add new group field
+    test.$collection.addField({
+      formId: 'added',
+      formType: 'field',
+      value: ' - added'
+    });
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - group 1 - added');
+
+    // remove group field
+    test.$collection.removeField('added');
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - group 1');
   });
 });

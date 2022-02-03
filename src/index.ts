@@ -15,9 +15,18 @@ declare module '@vue/runtime-core' {
 }
 
 const _configs = new WeakMap();
+const simpleApp = {
+  set(context: Record<string, any>, prop: string, value: any) {
+    context[prop] = value;
+  },
+  delete(context: Record<string, any>, prop: string) {
+    delete context[prop];
+  }
+};
 
 function createFormily() {
   const config = {
+    app: simpleApp,
     plugs: {},
     elements: []
   } as VueFormilyConfig;
@@ -42,14 +51,19 @@ function createFormily() {
       [Field, Collection, Group].forEach(F => this.register(F, options));
 
       app.mixin({
-        beforeCreate() {
-          this.$formily = this.$root.$formily || new Formily(options, this.$root);
+        beforeCreate(this: any) {
+          this.$formily = new Formily(options, this.$root);
         },
         data(this: any) {
           const alias = this.$formily.options.alias;
+          let forms = this.$root[alias];
+
+          if (!forms) {
+            forms = this.$root[alias] = {};
+          }
 
           return {
-            [alias]: this.$root[alias] || {}
+            [alias]: forms
           };
         }
       });

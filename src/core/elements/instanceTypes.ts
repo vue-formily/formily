@@ -1,5 +1,13 @@
 import { Rule, Validation } from '../validations';
-import { ElementsSchemas, ElementOptions, FieldSchema, FieldType, FieldValue, GroupSchema } from './types';
+import {
+  ElementsSchemas,
+  ElementOptions,
+  FieldSchema,
+  FieldType,
+  FieldValue,
+  GroupSchema,
+  CollectionSchema
+} from './types';
 import Evento from '../Evento';
 import { UnionToIntersection } from '../../utils-types';
 import { Plugs } from '../plugs';
@@ -116,8 +124,8 @@ export type GroupInstance<
   clear(): Promise<void>;
   addField(schema: ElementsSchemas, options?: { at?: number }): Element;
   removeField(elementOrId: Record<string, any> | string): void;
-  validate(options?: { cascade?: boolean }): Promise<void>;
   getSchema(): GroupSchema;
+  validate(options?: { cascade?: boolean }): Promise<void>;
 } & ElementInstance;
 
 export type FormInstance<
@@ -137,6 +145,7 @@ export type FormInstance<
   clear(): Promise<void>;
   addField(schema: ElementsSchemas, options?: { at?: number }): Element;
   removeField(elementOrId: Record<string, any> | string): void;
+  getSchema(): GroupSchema;
   validate(options?: { cascade?: boolean }): Promise<void>;
 } & ElementInstance;
 
@@ -167,6 +176,9 @@ export type CollectionInstance<
   addGroup(): CollectionItemInstance<T>;
   removeGroup(itemOrIndex: CollectionItemInstance<T> | number): void;
   validate(options?: { cascade?: boolean }): Promise<void>;
+  addField(schema: ElementsSchemas, options?: { at?: number }): Element[];
+  removeField(id: string): (Element | null)[];
+  getSchema(): CollectionSchema;
 } & ElementInstance;
 
 export type CollectionItemInstance<T extends Record<string, any>> = T['group'] extends Readonly<Record<string, unknown>>

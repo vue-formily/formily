@@ -492,6 +492,10 @@ describe('Group', () => {
         {
           ...required,
           message: 'test'
+        },
+        {
+          name: 'test',
+          cascade: true
         }
       ],
       fields: [
@@ -508,7 +512,7 @@ describe('Group', () => {
     });
 
     expect(JSON.stringify(group.schema)).toBe(
-      '{"formId":"group_test","formType":"group","rules":[{"name":"required","message":"test"}],"fields":[{"formId":"a","formType":"field"},{"formId":"b","formType":"field"}]}'
+      '{"formId":"group_test","formType":"group","rules":[{"name":"required","message":"test"},{"name":"test","cascade":true}],"fields":[{"formId":"a","formType":"field"},{"formId":"b","formType":"field"}]}'
     );
   });
 });

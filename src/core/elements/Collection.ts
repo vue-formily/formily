@@ -1,5 +1,5 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
-import { CollectionSchema, GroupSchema, ElementData } from './types';
+import { CollectionSchema, CollectionItemSchema, ElementData, ElementsSchemas, GroupSchema } from './types';
 import Element from './Element';
 import Group from './Group';
 import { cascadeRule, normalizeSchema } from '../../helpers';
@@ -24,6 +24,7 @@ type CollectionData = Omit<ElementData, 'schema'> & {
   schema: CollectionSchema;
   value: any[] | null;
   pending: boolean;
+  dummy: CollectionItem;
 };
 
 async function onGroupChanged(this: Collection, ...args: any[]) {
@@ -52,6 +53,19 @@ async function onCollectionChanged(this: Collection, ...args: any[]) {
   this.emit('changed', this, ...args);
 }
 
+function genItem({ rules }: CollectionSchema, groupSchema: CollectionItemSchema, context: Collection) {
+  return new CollectionItem(
+    cascadeRule(
+      {
+        formType: 'group',
+        ...groupSchema
+      } as GroupSchema,
+      rules
+    ),
+    context
+  );
+}
+
 export default class Collection extends Element {
   static FORM_TYPE = FORM_TYPE;
 
@@ -71,14 +85,15 @@ export default class Collection extends Element {
 
   protected _d!: CollectionData;
 
-  groups: CollectionItem[] | null;
+  groups: CollectionItem[] = [];
 
   constructor(schema: CollectionSchema, parent?: Element | null) {
     super(Collection.accept(schema), parent);
 
-    this._d.value = null;
+    const data = this._d;
 
-    this.groups = null;
+    data.value = null;
+    data.dummy = genItem(data.schema, data.schema.group, this);
   }
 
   get type() {
@@ -95,6 +110,29 @@ export default class Collection extends Element {
 
   get value() {
     return this._d.value;
+  }
+
+  addField(schema: ElementsSchemas, options?: { at?: number }): Element[] {
+    this._d.dummy.addField(schema, options);
+
+    return this.groups.map(group => group.addField(schema, options));
+  }
+
+  removeField(id: string): (Element | null)[] {
+    this._d.dummy.removeField(id);
+
+    return this.groups.map(group => group.removeField(id));
+  }
+
+  getSchema(): CollectionSchema {
+    const schema = super.getSchema() as CollectionSchema;
+    const [first] = this.groups;
+
+    if (first) {
+      schema.group = first.getSchema();
+    }
+
+    return schema;
   }
 
   async setValue(value: any[], { from = 0, autoAdd = true }: { from?: number; autoAdd?: boolean } = {}) {
@@ -154,18 +192,8 @@ export default class Collection extends Element {
       this.groups = [];
     }
 
-    const { rules, group } = this._d.schema;
-
-    const groupItem = new CollectionItem(
-      cascadeRule(
-        {
-          formType: 'group',
-          ...group
-        } as GroupSchema,
-        rules
-      ),
-      this
-    );
+    const { schema, dummy } = this._d;
+    const groupItem = genItem(schema, dummy.getSchema(), this);
 
     this.groups.push(groupItem);
 
