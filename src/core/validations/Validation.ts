@@ -2,7 +2,7 @@ import { findIndex, isNumber } from '@vue-formily/util';
 import { RuleSchema, Validator } from './types';
 import Rule from './Rule';
 import Objeto from '../Objeto';
-import { isUndefined, throwFormilyError } from '@/utils';
+import { isUndefined, throwFormilyError } from '../../utils';
 
 type InternalValidationRuleSchema = Validator | RuleSchema;
 
