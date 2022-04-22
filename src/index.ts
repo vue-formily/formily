@@ -110,7 +110,6 @@ export type { VueFormilyConfig, VueFormilyPlugin, Localizer } from './types';
 export type {
   ElementOptions,
   ElementSchema,
-  ElementData,
   ElementsSchemas,
   GroupSchema,
   CollectionSchema,

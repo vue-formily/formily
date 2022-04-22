@@ -1,5 +1,6 @@
 import { h } from 'vue';
 import { mount } from '@vue/test-utils';
+import stringFormat from '@vue-formily/string-format';
 import { createFormily, defineSchema, useFormily } from '@/index';
 import { Form } from '@/core/elements';
 import flushPromises from 'flush-promises';
@@ -203,15 +204,7 @@ describe('VueFormily', () => {
   it('Should plug stringFormat successfully', async () => {
     const formily = createFormily();
 
-    formily.plug({
-      install(config) {
-        (config.plugs as any).stringFormat = {
-          format(format: any, field: any) {
-            return `${format} ${field.value}`;
-          }
-        };
-      }
-    });
+    formily.plug(stringFormat);
 
     const wrapper = mount(
       {
@@ -232,7 +225,7 @@ describe('VueFormily', () => {
           {
             formId: 'a',
             formType: 'field',
-            format: 'format',
+            format: '{formId}',
             value: 'test'
           }
         ]
@@ -240,7 +233,7 @@ describe('VueFormily', () => {
     );
 
     form.on('validated', () => {
-      expect(form.$a.formatted).toBe('format test');
+      expect(form.$a.formatted).toBe('a');
     });
   });
 
@@ -250,7 +243,7 @@ describe('VueFormily', () => {
     formily.plug({
       install(config) {
         (config.plugs as any).dateFormat = {
-          format(format: any, field: any) {
+          format(format: any, [field]: [any]) {
             return `${format} ${field.value.getFullYear()}`;
           }
         };
@@ -335,6 +328,10 @@ describe('VueFormily', () => {
   });
 
   test('Reactivity', async () => {
+    const formily = createFormily();
+
+    formily.plug(stringFormat);
+
     const schema = defineSchema({
       formId: 'test',
       formType: 'group',
@@ -366,6 +363,38 @@ describe('VueFormily', () => {
               formType: 'field',
               value: 0,
               dasdas: 'saddas'
+            }
+          ]
+        },
+        {
+          formId: 'asignProp',
+          formType: 'field',
+          props: {
+            async test(this: any) {
+              const a = await Promise.resolve('test');
+
+              return a;
+            },
+            async testDepended(this: any) {
+              const a = await Promise.resolve('depended');
+
+              return `${this.props.test} ${a}`;
+            }
+          }
+        },
+        {
+          formId: 'rule',
+          formType: 'field',
+          props: {
+            test: 'rule'
+          },
+          rules: [
+            {
+              name: 'test2',
+              validator() {
+                return false;
+              },
+              message: '{context.props.test}'
             }
           ]
         },
@@ -403,41 +432,46 @@ describe('VueFormily', () => {
               id: 'test'
             },
             [
-              form.$field.props.test,
-              ' - ',
-              form.$group.value ? form.$group.value.field : '',
-              (form as any).$added ? (form as any).$added.value : '',
-              group0 ? group0.$test.value : '',
-              group0 && group0.$added ? group0.$added.value : ''
+              form.$field.props.test ? `${form.$field.props.test}` : '',
+              form.$group.value ? ` (1) ${form.$group.value.field}` : '',
+              form.$rule && form.$rule.validation.test2.error ? ` (2) ${form.$rule.validation.test2.error}` : '',
+              (form as any).$added ? ` (3) ${(form as any).$added.value}` : '',
+              group0 ? ` (4) ${group0.$test.value}` : '',
+              group0 && group0.$added ? ` (5) ${group0.$added.value}` : '',
+              form.$asignProp && form.$asignProp.props.test ? ` (6) ${form.$asignProp.props.test}` : '',
+              form.$asignProp && form.$asignProp.props.testDepended ? ` (7) ${form.$asignProp.props.testDepended}` : ''
             ]
           );
         }
       },
       {
         global: {
-          plugins: [createFormily()]
+          plugins: [formily]
         }
       }
     );
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 0 - 0');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 0 (1) 0 (2) rule (6) test (7) test depended');
 
     const test = (wrapper.vm.forms.test as unknown) as TestForm;
 
     test.$field.raw = 1;
     test.$group.$field.raw = 1;
 
+    test.removeField('rule');
+    test.removeField('asignProp');
+
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - 1');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (1) 1');
 
     test.$group.$field.raw = 2;
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - ');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1');
 
     // add new field
     test.addField({
@@ -448,38 +482,38 @@ describe('VueFormily', () => {
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - added');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (3) added');
 
     // remove added field
     test.removeField('added');
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - ');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1');
 
     // add new group
     test.$collection.addGroup();
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - group 1');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1');
 
     // add new group field
     test.$collection.addField({
       formId: 'added',
       formType: 'field',
-      value: ' - added'
+      value: 'added'
     });
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - group 1 - added');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1 (5) added');
 
     // remove group field
     test.$collection.removeField('added');
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 - group 1');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1');
   });
 });

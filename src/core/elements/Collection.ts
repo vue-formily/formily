@@ -1,6 +1,6 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
-import { CollectionSchema, CollectionItemSchema, ElementData, ElementsSchemas, GroupSchema } from './types';
-import Element from './Element';
+import { CollectionSchema, CollectionItemSchema, ElementsSchemas, GroupSchema } from './types';
+import Element, { ElementData } from './Element';
 import Group from './Group';
 import { cascadeRule, normalizeSchema } from '../../helpers';
 import { logMessage, readonlyDef, throwFormilyError } from '../../utils';
@@ -23,7 +23,6 @@ export class CollectionItem extends Group {
 type CollectionData = Omit<ElementData, 'schema'> & {
   schema: CollectionSchema;
   value: any[] | null;
-  pending: boolean;
   dummy: CollectionItem;
 };
 
@@ -44,7 +43,7 @@ async function onGroupChanged(this: Collection, ...args: any[]) {
 }
 
 async function onCollectionChanged(this: Collection, ...args: any[]) {
-  this._d.pending = true;
+  this.pender.add('formy');
 
   if (this.options.silent) {
     await this.validate({ cascade: false });
@@ -94,6 +93,8 @@ export default class Collection extends Element {
 
     data.value = null;
     data.dummy = genItem(data.schema, data.schema.group, this);
+
+    this.emit('created', this);
   }
 
   get type() {
@@ -102,10 +103,6 @@ export default class Collection extends Element {
 
   get formType() {
     return FORM_TYPE;
-  }
-
-  get pending() {
-    return this._d.pending;
   }
 
   get value() {
@@ -232,7 +229,7 @@ export default class Collection extends Element {
       this._d.value = null;
     }
 
-    this._d.pending = false;
+    this.pender.kill('formy');
 
     this.emit('validated', this);
   }

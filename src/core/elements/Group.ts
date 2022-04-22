@@ -1,14 +1,13 @@
 import { findIndex, isNumber, isPlainObject } from '@vue-formily/util';
-import { ElementData, GroupSchema, ElementsSchemas } from './types';
+import { GroupSchema, ElementsSchemas } from './types';
 
 import { cascadeRule, normalizeSchema } from '../../helpers';
-import Element from './Element';
+import Element, { ElementData } from './Element';
 import { readonlyDef, throwFormilyError } from '../../utils';
 
 type GroupData = Omit<ElementData, 'schema'> & {
   schema: GroupSchema;
   value: Record<string, any> | null;
-  pending: boolean;
 };
 
 const FORM_TYPE = 'group';
@@ -22,7 +21,7 @@ async function onFieldChanged(this: Group, ...args: any[]) {
   const [field] = args;
   const { valid, model } = field;
 
-  this._d.pending = true;
+  this.pender.add('formy');
 
   if (valid) {
     let value = this._d.value;
@@ -85,6 +84,8 @@ export default class Group extends Element {
     schema.fields.forEach(field => this.addField(field));
 
     this._d.value = null;
+
+    this.emit('created', this);
   }
 
   get type() {
@@ -93,10 +94,6 @@ export default class Group extends Element {
 
   get formType() {
     return FORM_TYPE;
-  }
-
-  get pending() {
-    return this._d.pending;
   }
 
   get value() {
@@ -200,7 +197,7 @@ export default class Group extends Element {
       this._d.value = null;
     }
 
-    this._d.pending = false;
+    this.pender.kill('formy');
 
     this.emit('validated', this);
   }

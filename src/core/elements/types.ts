@@ -1,5 +1,4 @@
 import { EventHandler } from '../Evento';
-import Validation from '../validations/Validation';
 import { ValidationRuleSchema } from '../validations/types';
 import { Builtin } from '../../utils-types';
 
@@ -14,13 +13,6 @@ export interface ElementSchema<I = string> {
   on?: Record<string, EventHandler>;
   options?: ElementOptions;
   rules?: ValidationRuleSchema<I>[];
-}
-
-export interface ElementData {
-  ancestors: any[] | null;
-  schema: any;
-  validation: Validation;
-  options: ElementOptions;
 }
 
 export type ElementsSchemas<I = string> = FieldSchema<I> | GroupSchema<I> | CollectionSchema<I>;

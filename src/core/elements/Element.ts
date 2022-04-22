@@ -1,9 +1,17 @@
 import { merge } from '@vue-formily/util';
-import { ElementData, ElementOptions, ElementSchema } from './types';
+import { ElementOptions, ElementSchema } from './types';
 import { genHtmlName, getProp, genProps } from '../../helpers';
 import { dumpProp, readonlyDumpProp, throwFormilyError } from '../../utils';
 import Objeto from '../Objeto';
 import { Validation } from '../validations';
+import Pender from '../Pender';
+
+export interface ElementData {
+  ancestors: any[] | null;
+  schema: any;
+  validation: Validation;
+  options: ElementOptions;
+}
 
 function genElementAncestors(elem: Element): any[] | null {
   const path = [];
@@ -43,6 +51,7 @@ export default abstract class Element extends Objeto {
 
   props: Record<string, any> = {};
   data = new WeakMap();
+  pender = new Pender();
 
   shaked = false;
 
@@ -68,7 +77,11 @@ export default abstract class Element extends Objeto {
 
     Object.keys(on).map(name => this.on(name, on[name]));
 
-    this._d.validation = new Validation(rules);
+    data.validation = new Validation(rules, this);
+  }
+
+  get pending() {
+    return this.pender.isPending();
   }
 
   get model() {

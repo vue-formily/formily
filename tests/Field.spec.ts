@@ -2,18 +2,11 @@ import flushPromises from 'flush-promises';
 import { Field } from '@/core/elements';
 import { numeric, required } from './helpers/rules';
 import { createFormily } from '@/index';
+import stringFormat from '@vue-formily/string-format';
 
 const formily = createFormily();
 
-formily.plug({
-  install(config) {
-    (config.plugs as any).stringFormat = {
-      format(_: any, { value }: any) {
-        return value;
-      }
-    };
-  }
-});
+formily.plug(stringFormat);
 
 describe('Field', () => {
   it('Can cast', async () => {
@@ -261,5 +254,42 @@ describe('Field', () => {
     await flushPromises();
 
     expect(f.checked).toBe(true);
+  });
+
+  it('Should pending', async () => {
+    jest.useFakeTimers();
+
+    const f = new Field({
+      formId: 'field_name',
+      formType: 'field',
+      checkedValue: 'test',
+      props: {
+        test(this: any) {
+          this.pender.add('test');
+
+          expect(this.pending).toBe(true);
+
+          setTimeout(() => {
+            this.pender.kill('test');
+
+            expect(this.pending).toBe(false);
+          }, 200);
+
+          return 'test';
+        }
+      }
+    });
+
+    expect(f.checked).toBe(false);
+
+    f.raw = 'test';
+
+    expect(f.props.test).toBe('test');
+
+    await flushPromises();
+
+    expect(f.checked).toBe(true);
+
+    jest.runAllTimers();
   });
 });

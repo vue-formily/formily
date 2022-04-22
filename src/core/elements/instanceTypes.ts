@@ -1,4 +1,3 @@
-import { Rule, Validation } from '../validations';
 import {
   ElementsSchemas,
   ElementOptions,
@@ -8,10 +7,49 @@ import {
   GroupSchema,
   CollectionSchema
 } from './types';
-import Evento from '../Evento';
 import { UnionToIntersection } from '../../utils-types';
-import { Plugs } from '../plugs';
-import { Element } from '.';
+import Objeto from '../Objeto';
+import Pender from '../Pender';
+import { RuleSchema, Validator } from '../validations/types';
+
+export type RuleInstance = {
+  readonly name: string;
+  message: string | null;
+  validator?: Validator | null;
+  context: Record<string, any> | null;
+  container: Record<string, any> | null;
+  valid: boolean;
+  error: string | null;
+  schema: RuleSchema<string> | Validator;
+  setMessage(message?: string | null): void;
+  reset(): void;
+  validate(value: any, props?: Record<string, any> | undefined, ...args: any[]): Promise<RuleInstance>;
+} & Objeto;
+
+export type ValidationInstance = {
+  rules: RuleInstance[];
+  context: Record<string, any> | null;
+  valid: boolean;
+  errors: (string | null)[] | null;
+  schema: (RuleSchema<string> | Validator | undefined)[] | null;
+  getSchema(): (RuleSchema<string> | Validator | undefined)[] | null;
+  addRule(
+    ruleOrSchema: RuleInstance | Validator | RuleSchema,
+    options?: {
+      at?: number;
+    }
+  ): RuleInstance;
+  removeRule(remove: RuleInstance | string): RuleInstance;
+  reset(): void;
+  validate(
+    value: any,
+    options?: {
+      excluded?: string[];
+      get?: string[];
+    },
+    ...args: any[]
+  ): Promise<ValidationInstance>;
+} & Objeto;
 
 export type ElementInstance = {
   readonly parent: ElementInstance | null;
@@ -20,8 +58,10 @@ export type ElementInstance = {
   props: Record<string, any>;
   data: WeakMap<Record<string, unknown>, any>;
   shaked: boolean;
+  pending: boolean;
+  pender: Pender;
   readonly options: ElementOptions;
-  readonly validation: Validation;
+  readonly validation: ValidationInstance;
   readonly error: string;
   readonly schema: Record<string, any>;
   getProps(
@@ -38,11 +78,11 @@ export type ElementInstance = {
   shake(): void;
   cleanUp(): void;
   getSchema(): Record<string, any>;
-} & { plugs: Plugs } & Evento;
+} & Objeto;
 
 export type CustomValidationProperty<R> = R extends Record<string, any>
   ? {
-      [key in R['name']]: Rule;
+      [key in R['name']]: RuleInstance;
     }
   : never;
 
@@ -67,7 +107,7 @@ export type CustomVariationProperties<R, E = undefined> = UnionToIntersection<
       : CascadeRule<E extends any[] ? E[number] : E, R>
   >
 > &
-  Validation;
+  ValidationInstance;
 
 export type CustomGroupProperty<F, R extends any[]> = F extends Record<string, any>
   ? {
@@ -93,7 +133,6 @@ export type FieldInstance<
   readonly type: FieldType;
   readonly formType: 'field';
   readonly default: any;
-  readonly pending: boolean;
   readonly formatted: string;
   raw: any;
   setRaw(value: any): Promise<void>;
@@ -115,14 +154,13 @@ export type GroupInstance<
   fields: T['fields'];
   readonly type: 'enum';
   readonly formType: 'group';
-  readonly pending: boolean;
   readonly value: Record<string, any>;
   setValue(obj: Record<string, any>): Promise<Record<string, any>>;
   shake(options?: { cascade?: boolean }): void;
   isValid(): boolean;
   reset(): void;
   clear(): Promise<void>;
-  addField(schema: ElementsSchemas, options?: { at?: number }): Element;
+  addField(schema: ElementsSchemas, options?: { at?: number }): ElementInstance;
   removeField(elementOrId: Record<string, any> | string): void;
   getSchema(): GroupSchema;
   validate(options?: { cascade?: boolean }): Promise<void>;
@@ -136,14 +174,13 @@ export type FormInstance<
   fields: T['fields'];
   readonly type: 'enum';
   readonly formType: 'group';
-  readonly pending: boolean;
   readonly value: Record<string, any>;
   setValue(obj: Record<string, any>): Promise<Record<string, any>>;
   shake(options?: { cascade?: boolean }): void;
   isValid(): boolean;
   reset(): void;
   clear(): Promise<void>;
-  addField(schema: ElementsSchemas, options?: { at?: number }): Element;
+  addField(schema: ElementsSchemas, options?: { at?: number }): ElementInstance;
   removeField(elementOrId: Record<string, any> | string): void;
   getSchema(): GroupSchema;
   validate(options?: { cascade?: boolean }): Promise<void>;
@@ -157,7 +194,6 @@ export type CollectionInstance<
   validation: CustomVariationProperties<T['rules'], R>;
   readonly type: 'set';
   readonly formType: 'collection';
-  readonly pending: boolean;
   readonly value: any[];
   setValue(
     value: any[],
@@ -176,8 +212,8 @@ export type CollectionInstance<
   addGroup(): CollectionItemInstance<T>;
   removeGroup(itemOrIndex: CollectionItemInstance<T> | number): void;
   validate(options?: { cascade?: boolean }): Promise<void>;
-  addField(schema: ElementsSchemas, options?: { at?: number }): Element[];
-  removeField(id: string): (Element | null)[];
+  addField(schema: ElementsSchemas, options?: { at?: number }): ElementInstance[];
+  removeField(id: string): (ElementInstance | null)[];
   getSchema(): CollectionSchema;
 } & ElementInstance;
 

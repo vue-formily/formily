@@ -2,7 +2,8 @@
 set -e
 
 read -p "Enter new version: " -r VERSION
-read -p "Enter branch: " -r BRANCH
+read -p "Enter extra tag (latest): " -r TAG
+read -p "Enter branch (main): " -r BRANCH
 
 BRANCH="${BRANCH:=main}"
 

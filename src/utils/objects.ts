@@ -2,7 +2,7 @@ import { isPlainObject } from '@vue-formily/util';
 import { markRaw } from 'vue';
 
 export function readonlyDumpProp(obj: any, key: string, value: any, descriptor?: Record<string, any>) {
-  def(obj, key, {
+  return def(obj, key, {
     value: isPlainObject(value) ? markRaw(value) : value,
     writable: false,
     configurable: false,
@@ -11,7 +11,7 @@ export function readonlyDumpProp(obj: any, key: string, value: any, descriptor?:
 }
 
 export function dumpProp(obj: any, key: string, value: any, descriptor?: Record<string, any>) {
-  def(obj, key, {
+  return def(obj, key, {
     value: isPlainObject(value) ? markRaw(value) : value,
     writable: true,
     configurable: false,

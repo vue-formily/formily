@@ -134,7 +134,7 @@ Let's start with a simple login form:
 `vue-formily` need a form schema to work with, so let's define one:
 
 ```js
-import { defineSchema } from '@vue-formily';
+import { defineSchema } from '@vue-formily/formily';
 import { required, email } from "@vue-formily/rules";
 
 const loginForm = defineSchema({
@@ -205,7 +205,7 @@ export default {
 }
 
 // Vue 3.x
-import { useFormily } from '@vue-formily';
+import { useFormily } from '@vue-formily/formily';
 
 export default {
   setup() {

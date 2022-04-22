@@ -1,7 +1,7 @@
-import { isFunction, isNumeric } from '@vue-formily/util';
-import { ElementData, FieldSchema, FieldType, FieldValue } from './types';
+import { isNumeric } from '@vue-formily/util';
+import { FieldSchema, FieldType, FieldValue } from './types';
 
-import Element from './Element';
+import Element, { ElementData } from './Element';
 import { toString, readonlyDumpProp, isUndefined, throwFormilyError } from '../../utils';
 import { normalizeSchema } from '../../helpers';
 
@@ -11,7 +11,6 @@ type FieldData = ElementData & {
   typed: FieldValue;
   checkedValue: any;
   formatted: string | null;
-  pending: boolean;
 };
 
 const FORM_TYPE = 'field';
@@ -31,24 +30,6 @@ const casts: Record<string, (value: any, ...args: any[]) => FieldValue> = {
     return !isNaN(date.getTime()) ? date : null;
   }
 };
-
-function formatter(this: Field): string {
-  const { type, _d: data, plugs = {} } = this;
-  const { format } = data.schema;
-  const FORMATER = `${type}Format`;
-  const formatter = (plugs as any)[FORMATER];
-  const translater = (plugs as any).i18n;
-  let result = null;
-
-  if (format && formatter) {
-    const formatting = isFunction(format) ? format.call(this, this) : format;
-    const translated = translater ? translater.translate(formatting, this) : formatting;
-
-    result = formatter.format(translated, this);
-  }
-
-  return result;
-}
 
 export default class Field extends Element {
   static FORM_TYPE = FORM_TYPE;
@@ -90,11 +71,11 @@ export default class Field extends Element {
 
     data.typed = null;
     data.formatted = null;
-    data.pending = false;
 
     this.setCheckedValue(schema.checkedValue);
-
     this.setValue(value);
+
+    this.emit('created', this);
   }
 
   get formType() {
@@ -103,10 +84,6 @@ export default class Field extends Element {
 
   get type(): FieldType {
     return this.schema.type || 'string';
-  }
-
-  get pending() {
-    return this._d.pending;
   }
 
   get formatted() {
@@ -186,8 +163,9 @@ export default class Field extends Element {
     const raw = this.raw;
     const cast = casts[this.type];
     const data = this._d;
+    const format = (data.schema as FieldSchema).format;
 
-    data.pending = true;
+    this.pender.add('formy');
 
     this.emit('validate', this);
 
@@ -195,8 +173,9 @@ export default class Field extends Element {
     const { valid } = await this.validation.validate(typed, {}, this.props, this);
 
     data.typed = typed !== null && valid ? typed : null;
-    data.formatted = formatter.call(this);
-    data.pending = false;
+    data.formatted = format ? this.format(format, this.type) : null;
+
+    this.pender.kill('formy');
 
     this.emit('validated', this);
   }

@@ -1,7 +1,8 @@
 import { ElementsSchemas } from '../core/elements/types';
 import { findIndex, get, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
 import { ValidationRuleSchema, Validator } from '../core/validations/types';
-import { isUndefined, def } from '../utils';
+import { isUndefined, def, isPromise, dumpProp } from '../utils';
+import { formatter } from './formatter';
 
 export function cascadeRule<T extends ElementsSchemas>(fieldSchema: T, parentRules?: ValidationRuleSchema[]): T {
   const schema = merge({}, fieldSchema);
@@ -68,13 +69,43 @@ export function genProps(this: any, source: Record<string, any>, properties: any
     if (newSource) {
       source[key] = genProps.call(this, newSource, prop, ...args);
     } else if (isFunction(prop)) {
+      this._d.asyncProps =
+        this._d.asyncProps ||
+        dumpProp(
+          {
+            values: {}
+          },
+          'asigned',
+          {}
+        );
+
       def(source, key, {
-        get: () => prop.call(this, this, ...args)
+        get: () => {
+          const asyncProps = this._d.asyncProps;
+          const asyncValue = asyncProps.values[key];
+          let result;
+
+          if (asyncValue && !asyncProps.asigned[key]) {
+            result = asyncValue;
+
+            delete asyncProps.asigned[key];
+          } else {
+            result = prop.call(this, this, ...args);
+          }
+
+          if (isPromise(result)) {
+            result.then((value: any) => {
+              // Trigger Vue re-render
+              asyncProps.values[key] = value;
+              asyncProps.asigned[key] = false;
+            });
+          }
+
+          return result;
+        }
       });
     } else {
-      const translater = this.plugs.i18n;
-
-      source[key] = isString(prop) && translater ? translater.translate(prop, this, ...args) : prop;
+      source[key] = isString(prop) ? formatter(prop, 'string', this, ...args) : prop;
     }
   }
 
