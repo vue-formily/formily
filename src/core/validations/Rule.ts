@@ -3,11 +3,13 @@ import { RuleSchema, Validator } from './types';
 
 import { dumpProp, readonlyDumpProp } from '../../utils';
 import Objeto from '../Objeto';
+import { ValidationInstance } from '../elements/instanceTypes';
 
-type RuleData = {
+export type RuleData = {
   error: string | null;
   valid: boolean;
   schema: RuleSchema | Validator;
+  container: ValidationInstance | null;
 };
 
 function isRule(input: Rule | RuleSchema | Validator): input is Rule {
@@ -20,18 +22,20 @@ export default class Rule extends Objeto {
   message!: string | null;
   validator?: Validator | null;
 
-  constructor(rule: Rule | RuleSchema | Validator) {
+  constructor(rule: Rule | RuleSchema | Validator, container: ValidationInstance | null = null) {
     super();
 
-    const data = this._d;
+    const _d = this._d;
 
-    readonlyDumpProp(data, 'schema', isRule(rule) ? rule.getSchema() : rule);
+    _d.container = container;
+
+    readonlyDumpProp(_d, 'schema', isRule(rule) ? rule.getSchema() : rule);
     readonlyDumpProp(this, 'name', rule.name || Date.now());
 
     dumpProp(this, 'message', null);
 
-    data.error = null;
-    data.valid = true;
+    _d.error = null;
+    _d.valid = true;
 
     if (isFunction(rule)) {
       this.validator = rule;
@@ -40,6 +44,14 @@ export default class Rule extends Objeto {
 
       this.setMessage(rule.message as string);
     }
+  }
+
+  get context(): Record<string, any> | null {
+    return this.container ? this.container.context : null;
+  }
+
+  get container() {
+    return this._d.container;
   }
 
   get valid() {
@@ -67,26 +79,26 @@ export default class Rule extends Objeto {
     this._d.valid = true;
   }
 
-  async validate(value: any, props: Record<string, any> = {}, ...args: any[]): Promise<Rule> {
-    const { _d: data, plugs = {} } = this;
-    const translater = (plugs as any).i18n;
-
-    let error = null;
-    let valid = true;
-    let result: string | boolean = true;
-
-    if (isFunction(this.validator)) {
-      result = await this.validator(value, props, ...args);
-    }
-
+  async validate(value: any, props?: Record<string, any>, ...args: any[]): Promise<Rule> {
     this.emit('validate', this);
 
-    if (result === false || isString(result)) {
-      error = result || this.message;
-      valid = false;
+    const { _d: data } = this;
+
+    let error: string | null = null;
+    let valid = true;
+    let result: string | boolean = true;
+    const _props = props || (this.context && this.context.props) || {};
+
+    if (isFunction(this.validator)) {
+      result = await this.validator(value, _props, ...args);
+
+      if (result === false || isString(result)) {
+        error = result || this.format(this.message, 'string', ...args);
+        valid = false;
+      }
     }
 
-    data.error = translater && isString(error) ? translater.translate(error, ...args) : error;
+    data.error = error;
     data.valid = valid;
 
     this.emit('validated', this);

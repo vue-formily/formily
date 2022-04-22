@@ -6,13 +6,23 @@ import { isUndefined, throwFormilyError } from '../../utils';
 
 type InternalValidationRuleSchema = Validator | RuleSchema;
 
+export type ValiationData = {
+  context: Record<string, any> | null;
+};
+
 export default class Validation extends Objeto {
   rules: Rule[] = [];
 
-  constructor(rules: InternalValidationRuleSchema[] = []) {
+  constructor(rules: InternalValidationRuleSchema[] = [], context: Record<string, any> | null = null) {
     super();
 
+    this._d.context = context;
+
     rules.forEach(rule => this.addRule(rule));
+  }
+
+  get context(): Record<string, any> | null {
+    return this._d.context;
   }
 
   get valid() {
@@ -46,7 +56,7 @@ export default class Validation extends Objeto {
   }
 
   addRule(ruleOrSchema: Rule | InternalValidationRuleSchema, { at }: { at?: number } = {}): Rule {
-    const rule = new Rule(ruleOrSchema);
+    const rule = new Rule(ruleOrSchema, this);
     const name = rule.name;
 
     if (name in this) {
