@@ -440,12 +440,13 @@ describe('VueFormily', () => {
               form.$field.props.test ? `${form.$field.props.test}` : '',
               form.$group.value ? ` (1) ${form.$group.value.field}` : '',
               form.$rule && form.$rule.validation.test2.error ? ` (2) ${form.$rule.validation.test2.error}` : '',
-              (form as any).$added ? ` (3) ${(form as any).$added.value}` : '',
-              group0 ? ` (4) ${group0.$test.value}` : '',
-              group0 && group0.$added ? ` (5) ${group0.$added.value}` : '',
-              form.$asignProp && form.$asignProp.props.test ? ` (6) ${form.$asignProp.props.test}` : '',
-              form.$asignProp && form.$asignProp.props.testDepended ? ` (7) ${form.$asignProp.props.testDepended}` : '',
-              form.props.test ? ` (8) ${form.props.test}` : ''
+              form.$rule && form.$rule.error ? ` (3) ${form.$rule.error}` : '',
+              (form as any).$added ? ` (4) ${(form as any).$added.value}` : '',
+              group0 ? ` (5) ${group0.$test.value}` : '',
+              group0 && group0.$added ? ` (6) ${group0.$added.value}` : '',
+              form.$asignProp && form.$asignProp.props.test ? ` (7) ${form.$asignProp.props.test}` : '',
+              form.$asignProp && form.$asignProp.props.testDepended ? ` (8) ${form.$asignProp.props.testDepended}` : '',
+              form.props.test ? ` (9) ${form.props.test}` : ''
             ]
           );
         }
@@ -459,12 +460,18 @@ describe('VueFormily', () => {
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 0 (1) 0 (2) rule (6) test (7) test depended');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 0 (1) 0 (2) rule (7) test (8) test depended');
 
     const test = (wrapper.vm.forms.test as unknown) as TestForm;
 
     test.$field.raw = 1;
     test.$group.$field.raw = 1;
+
+    test.shake();
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (1) 1 (2) rule (3) rule (7) test (8) test depended');
 
     test.removeField('rule');
     test.removeField('asignProp');
@@ -488,7 +495,7 @@ describe('VueFormily', () => {
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (3) added');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) added');
 
     // remove added field
     test.removeField('added');
@@ -502,7 +509,7 @@ describe('VueFormily', () => {
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (5) group 1');
 
     // add new group field
     test.$collection.addField({
@@ -513,20 +520,20 @@ describe('VueFormily', () => {
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1 (5) added');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (5) group 1 (6) added');
 
     // remove group field
     test.$collection.removeField('added');
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (5) group 1');
 
     // remove group field
     test.data.test = 'test';
 
     await flushPromises();
 
-    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1 (8) test');
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (5) group 1 (9) test');
   });
 });

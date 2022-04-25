@@ -12,6 +12,7 @@ export interface ElementData {
   validation: Validation;
   options: ElementOptions;
   data: Record<string, any>;
+  shaked: boolean;
 }
 
 function genElementAncestors(elem: Element): any[] | null {
@@ -53,8 +54,6 @@ export default abstract class Element extends Objeto {
   props: Record<string, any> = {};
   pender = new Pender();
 
-  shaked = false;
-
   abstract isValid(): boolean;
 
   constructor(schema: ElementSchema, parent?: Element | null) {
@@ -67,6 +66,7 @@ export default abstract class Element extends Objeto {
     const data = this._d;
 
     data.data = {};
+    data.shaked = false;
 
     readonlyDumpProp(data, 'schema', schema);
 
@@ -80,6 +80,10 @@ export default abstract class Element extends Objeto {
     Object.keys(on).map(name => this.on(name, on[name]));
 
     data.validation = new Validation(rules, this);
+  }
+
+  get shaked() {
+    return this._d.shaked;
   }
 
   get pending() {
@@ -103,7 +107,7 @@ export default abstract class Element extends Objeto {
   }
 
   get error() {
-    if (!this.shaked || this.valid) {
+    if (!this._d.shaked || this.valid) {
       return null;
     }
 
@@ -152,10 +156,10 @@ export default abstract class Element extends Objeto {
   }
 
   shake() {
-    this.shaked = true;
+    this._d.shaked = true;
   }
 
   cleanUp() {
-    this.shaked = false;
+    this._d.shaked = false;
   }
 }
