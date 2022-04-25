@@ -55,8 +55,8 @@ export type ElementInstance = {
   readonly parent: ElementInstance | null;
   readonly model: string;
   readonly type: string;
+  readonly data: Record<string, any>;
   props: Record<string, any>;
-  data: WeakMap<Record<string, unknown>, any>;
   shaked: boolean;
   pending: boolean;
   pender: Pender;

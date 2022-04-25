@@ -335,6 +335,11 @@ describe('VueFormily', () => {
     const schema = defineSchema({
       formId: 'test',
       formType: 'group',
+      props: {
+        test(this: any) {
+          return this.data.test;
+        }
+      },
       fields: [
         {
           formId: 'field',
@@ -439,7 +444,8 @@ describe('VueFormily', () => {
               group0 ? ` (4) ${group0.$test.value}` : '',
               group0 && group0.$added ? ` (5) ${group0.$added.value}` : '',
               form.$asignProp && form.$asignProp.props.test ? ` (6) ${form.$asignProp.props.test}` : '',
-              form.$asignProp && form.$asignProp.props.testDepended ? ` (7) ${form.$asignProp.props.testDepended}` : ''
+              form.$asignProp && form.$asignProp.props.testDepended ? ` (7) ${form.$asignProp.props.testDepended}` : '',
+              form.props.test ? ` (8) ${form.props.test}` : ''
             ]
           );
         }
@@ -515,5 +521,12 @@ describe('VueFormily', () => {
     await flushPromises();
 
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1');
+
+    // remove group field
+    test.data.test = 'test';
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (4) group 1 (8) test');
   });
 });
