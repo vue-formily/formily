@@ -50,7 +50,7 @@ export default abstract class Element extends Objeto {
   protected _d!: ElementData;
 
   props: Record<string, any> = {};
-  data = new WeakMap();
+  data = new Map();
   pender = new Pender();
 
   shaked = false;
