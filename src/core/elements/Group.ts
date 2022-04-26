@@ -18,7 +18,7 @@ function genFieldProp(fieldOrModel: any) {
 }
 
 async function onFieldChanged(this: Group, ...args: any[]) {
-  const [field] = args;
+  const field = args[args.length - 1];
   const { valid, model } = field;
 
   this.pender.add('formy');
@@ -37,7 +37,7 @@ async function onFieldChanged(this: Group, ...args: any[]) {
     await this.validate({ cascade: false });
   }
 
-  this.emit('changed', this, ...args);
+  this.emit('changed', ...args, this);
 }
 
 export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {

@@ -123,7 +123,7 @@ export default class Field extends Element {
     }
 
     if (raw !== curRaw) {
-      this.emit('changed', this, curRaw, raw);
+      this.emit('changed', raw, curRaw, this);
     }
 
     return this.value;

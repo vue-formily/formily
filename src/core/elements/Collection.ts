@@ -27,7 +27,7 @@ type CollectionData = Omit<ElementData, 'schema'> & {
 };
 
 async function onGroupChanged(this: Collection, ...args: any[]) {
-  const [group] = args;
+  const group = args[args.length - 1];
 
   if (group.valid) {
     let value = this._d.value;
@@ -49,7 +49,7 @@ async function onCollectionChanged(this: Collection, ...args: any[]) {
     await this.validate({ cascade: false });
   }
 
-  this.emit('changed', this, ...args);
+  this.emit('changed', ...args, this);
 }
 
 function genItem({ rules }: CollectionSchema, groupSchema: CollectionItemSchema, context: Collection) {
