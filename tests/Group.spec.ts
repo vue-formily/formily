@@ -124,15 +124,13 @@ describe('Group', () => {
     expect(group.error).toBe('test');
     expect(group.$a.error).toBe('abc');
 
-    group.reset();
-
-    await group.validate({ cascade: false });
+    await group.reset();
 
     group.shake();
 
     expect(group.valid).toBe(false);
     expect(group.error).toBe('test');
-    expect(group.$a.valid).toBe(true);
+    expect(group.$a.valid).toBe(false);
   });
 
   it('Can shake', async () => {
@@ -335,6 +333,15 @@ describe('Group', () => {
     });
     expect(group.$a.value).toBe('test');
     expect(group.$b.$c.value).toBe('abc');
+
+    await group.$a.setValue('hello');
+
+    expect(group.value).toEqual({
+      a: 'hello',
+      b: {
+        c: 'abc'
+      }
+    });
   });
 
   it('Can clear', async () => {
@@ -405,83 +412,91 @@ describe('Group', () => {
       ]
     });
 
-    group.addField({
+    await group.addField({
       formId: 'b',
       formType: 'field',
       value: 'bbb'
     });
-    group.addField({
+    await group.addField({
       formType: 'field',
-      formId: 'c'
+      formId: 'c',
+      value: 'c'
     });
-    group.addField(
+    await group.addField(
       {
         formType: 'field',
-        formId: 'd'
+        formId: 'd',
+        value: 'd'
       },
       {
         at: 1
       }
     );
 
-    await flushPromises();
-
     expect((group as any).$b).toBeInstanceOf(Field);
     expect(group.fields.length).toBe(4);
     expect(group.fields[1].formId).toBe('d');
     expect((group as any).$b.value).toBe('bbb');
-    expect(group.value).toEqual({ b: 'bbb' });
 
-    expect(() => {
+    expect(group.value).toEqual({
+      a: '',
+      b: 'bbb',
+      c: 'c',
+      d: 'd'
+    });
+
+    await expect(
       group.addField({
         formType: 'field',
         formId: 'b'
-      });
-    }).toThrow();
+      })
+    ).rejects.toThrow();
   });
 
   it('Can remove field', async () => {
     const group = createGroup({
       formId: 'group_test',
       formType: 'group',
-      rules: [
-        {
-          ...required,
-          message: 'test'
-        }
-      ],
       fields: [
         {
           formType: 'field',
-          formId: 'a'
+          formId: 'a',
+          value: 'a'
         }
       ]
     });
 
-    group.addField({
+    await group.addField({
       formType: 'field',
-      formId: 'b'
+      formId: 'b',
+      value: 'b'
     });
-    group.addField({
+    await group.addField({
       formType: 'field',
-      formId: 'c'
+      formId: 'c',
+      value: 'c'
     });
-    group.addField(
+    await group.addField(
       {
         formType: 'field',
-        formId: 'd'
+        formId: 'd',
+        value: 'd'
       },
       {
         at: 1
       }
     );
 
-    group.removeField('c');
-    group.removeField(group.fields[0]);
+    await group.removeField('c');
+    await group.removeField(group.fields[0]);
 
     expect(group.fields.length).toBe(2);
     expect((group as any).$c).toBe(undefined);
     expect((group as any).$a).toBe(undefined);
+    expect((group as any).value).toEqual({
+      b: 'b',
+      d: 'd'
+    });
   });
 
   it('Can get schema', async () => {

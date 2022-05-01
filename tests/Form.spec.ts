@@ -59,32 +59,32 @@ describe('Form', () => {
     expect(form.$b.htmlName).toBe('form[b][]');
   });
 
-  it('Nested form fields has correct name', () => {
+  it('Nested form fields has correct name', async () => {
     type C1 = CollectionItemInstance<TestForm['$b']>;
     type C2 = CollectionItemInstance<C1['$d']>;
 
     // groups item 1
-    const b0 = form.$b.addGroup() as C1;
+    const b0 = (await form.$b.addGroup()) as C1;
 
     expect(b0.htmlName).toBe('form[b][0]');
     expect(b0.$c.htmlName).toBe('form[b][0][c]');
 
-    const i1d0 = b0.$d.addGroup() as C2;
+    const i1d0 = (await b0.$d.addGroup()) as C2;
 
     expect(i1d0.htmlName).toBe('form[b][0][d][0]');
     expect(i1d0.$e.htmlName).toBe('form[b][0][d][0][e]');
 
     // group item 2
-    const b2 = form.$b.addGroup() as C1;
+    const b2 = (await form.$b.addGroup()) as C1;
 
     expect(b2.htmlName).toBe('form[b][1]');
     expect(b2.$d.htmlName).toBe('form[b][1][d][]');
 
-    const b2d0 = b2.$d.addGroup();
+    const b2d0 = await b2.$d.addGroup();
 
     expect(b2d0.htmlName).toBe('form[b][1][d][0]');
 
-    const b2d1 = b2.$d.addGroup();
+    const b2d1 = await b2.$d.addGroup();
     expect(b2d1.htmlName).toBe('form[b][1][d][1]');
   });
 });

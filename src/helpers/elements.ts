@@ -1,7 +1,7 @@
 import { ElementsSchemas } from '../core/elements/types';
 import { findIndex, get, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
 import { ValidationRuleSchema, Validator } from '../core/validations/types';
-import { isUndefined, def, isPromise, dumpProp } from '../utils';
+import { isUndefined, def, isPromise, dumpProp, readonlyDef } from '../utils';
 import { formatter } from './formatter';
 
 export function cascadeRule<T extends ElementsSchemas>(fieldSchema: T, parentRules?: ValidationRuleSchema[]): T {
@@ -124,4 +124,50 @@ export function normalizeSchema(schema: ElementsSchemas, type: string) {
       rules
     }
   );
+}
+
+export function genValueFromElements(value: any, elements: any[]) {
+  const length = elements.length;
+
+  for (let i = 0; i < length; i++) {
+    const element = elements[i] as any;
+
+    if (!element.valid) {
+      return null;
+    }
+
+    readonlyDef(value, isPlainObject(value) ? element.model : element.index, () => element.value);
+  }
+
+  return value;
+}
+
+export async function updateValue(this: any, elements: any[]) {
+  const { _d, type } = this;
+
+  _d.tempValue = genValueFromElements(type === 'enum' ? {} : [], elements);
+
+  if (this.options.silent) {
+    await this.validate({ cascade: false });
+  }
+}
+
+export function addFieldOrGroup(
+  this: any,
+  item: any,
+  changedHandler: (...args: any[]) => void,
+  validatedHandler: () => void,
+  done: () => void
+) {
+  item
+    .on('changed:formy', (...args: any[]) => changedHandler.apply(this, args), { noOff: true })
+    .on('validated:formy', () => validatedHandler.call(this), { noOff: true });
+
+  const tempEventName = `validated:__${this.htmlName}`;
+
+  this.on(tempEventName, () => {
+    this.emit(`${this.formType}added`, item).emit('changed', this).off(tempEventName);
+
+    done();
+  });
 }
