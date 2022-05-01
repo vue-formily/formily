@@ -49,7 +49,8 @@ describe('Collection', () => {
 
     expect(collection.groups?.length).toBe(1);
 
-    await collection.addGroup().setValue({
+    const group = await collection.addGroup();
+    await group.setValue({
       a: 'test'
     });
 
@@ -85,7 +86,7 @@ describe('Collection', () => {
 
     const collection = Collection.create(s);
 
-    let group = collection.addGroup();
+    let group = await collection.addGroup();
 
     await group.setValue({
       a: 'test',
@@ -94,14 +95,14 @@ describe('Collection', () => {
 
     collection.removeGroup(0);
 
-    group = collection.addGroup();
+    group = await collection.addGroup();
 
     await group.setValue({
       a: 'test',
       formtype: 'field'
     });
 
-    collection.removeGroup(group);
+    await collection.removeGroup(group);
 
     collection.on('validated', () => {
       expect(collection.groups?.length).toBe(0);
@@ -138,8 +139,9 @@ describe('Collection', () => {
 
     const collection = Collection.create(s);
 
-    collection.addGroup();
-    collection.addField({
+    const group = await collection.addGroup();
+
+    group.addField({
       formId: 'added',
       formType: 'field'
     });
@@ -286,7 +288,7 @@ describe('Collection', () => {
       }
     });
 
-    let collection = Collection.create(s);
+    let collection = Collection.create<typeof s>(s);
 
     collection.addGroup();
 
@@ -359,7 +361,8 @@ describe('Collection', () => {
 
   it('Can set value', async () => {
     const s = defineSchema({
-      ...schema,
+      formId: 'collection_test',
+      formType: 'collection',
       rules: [
         {
           ...required,
@@ -413,7 +416,20 @@ describe('Collection', () => {
 
     expect(collection.groups).toBeInstanceOf(Array);
     expect(collection.groups?.length).toBe(2);
-    expect(collection.value).toEqual(value);
+    expect(collection.value).toEqual([
+      {
+        a: 'abc',
+        b: {
+          c: ''
+        }
+      },
+      {
+        a: 'test',
+        b: {
+          c: 'sss'
+        }
+      }
+    ]);
 
     await collection.setValue([{ a: 'eee' }], { from: 1 });
 

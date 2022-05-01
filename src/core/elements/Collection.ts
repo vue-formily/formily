@@ -1,9 +1,10 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
-import { CollectionSchema, CollectionItemSchema, ElementsSchemas, GroupSchema } from './types';
+import { CollectionSchema, CollectionItemSchema, ElementsSchemas, GroupSchema, ReadonlySchema } from './types';
 import Element, { ElementData } from './Element';
 import Group from './Group';
-import { cascadeRule, normalizeSchema } from '../../helpers';
-import { logMessage, readonlyDef, throwFormilyError } from '../../utils';
+import { cascadeRule, normalizeSchema, updateValue, addFieldOrGroup } from '../../helpers';
+import { logMessage, throwFormilyError } from '../../utils';
+import { CollectionInstance, CollectionItemInstance } from './instanceTypes';
 
 const FORM_TYPE = 'collection';
 const TYPE = 'set';
@@ -24,35 +25,26 @@ type CollectionData = Omit<ElementData, 'schema'> & {
   schema: CollectionSchema;
   value: any[] | null;
   dummy: CollectionItem;
+  tempValue?: any;
 };
 
 async function onGroupChanged(this: Collection, ...args: any[]) {
-  const group = args[args.length - 1];
-
-  if (group.valid) {
-    let value = this._d.value;
-
-    if (!value) {
-      value = this._d.value = [];
-    }
-
-    readonlyDef(value, group.index, () => group.value);
-  }
-
-  await onCollectionChanged.apply(this, args);
-}
-
-async function onCollectionChanged(this: Collection, ...args: any[]) {
-  this.pender.add('formy');
-
-  if (this.options.silent) {
-    await this.validate({ cascade: false });
-  }
-
   this.emit('changed', ...args, this);
 }
 
-function genItem({ rules }: CollectionSchema, groupSchema: CollectionItemSchema, context: Collection) {
+async function onGroupValidated(this: Collection) {
+  await updateColectionValue.call(this);
+}
+
+async function updateColectionValue(this: Collection) {
+  await updateValue.call(this, this.groups);
+}
+
+function genItem<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(
+  { rules }: CollectionSchema,
+  groupSchema: CollectionItemSchema,
+  context: Collection
+): CollectionItemInstance<T> {
   return new CollectionItem(
     cascadeRule(
       {
@@ -62,7 +54,7 @@ function genItem({ rules }: CollectionSchema, groupSchema: CollectionItemSchema,
       rules
     ),
     context
-  );
+  ) as CollectionItemInstance<T>;
 }
 
 export default class Collection extends Element {
@@ -78,8 +70,8 @@ export default class Collection extends Element {
     return normalizeSchema(schema, TYPE);
   }
 
-  static create(schema: CollectionSchema, parent?: Element | null) {
-    return new Collection(schema, parent);
+  static create<F extends ReadonlySchema<CollectionSchema>>(schema: CollectionSchema, parent?: Element | null) {
+    return (new Collection((schema as unknown) as CollectionSchema, parent) as unknown) as CollectionInstance<F>;
   }
 
   protected _d!: CollectionData;
@@ -109,16 +101,16 @@ export default class Collection extends Element {
     return this._d.value;
   }
 
-  addField(schema: ElementsSchemas, options?: { at?: number }): Element[] {
-    this._d.dummy.addField(schema, options);
+  async addField(schema: ElementsSchemas, options?: { at?: number }) {
+    await Promise.all(this.groups.map(async group => await group.addField(schema, options)));
 
-    return this.groups.map(group => group.addField(schema, options));
+    await this._d.dummy.addField(schema, options);
   }
 
-  removeField(id: string): (Element | null)[] {
-    this._d.dummy.removeField(id);
+  async removeField(id: string) {
+    await Promise.all(this.groups.map(async group => await group.removeField(id)));
 
-    return this.groups.map(group => group.removeField(id));
+    await this._d.dummy.removeField(id);
   }
 
   getSchema(): CollectionSchema {
@@ -141,10 +133,11 @@ export default class Collection extends Element {
 
     await Promise.all(
       value.slice(0, autoAdd ? value.length : groups.length).map(async (val: Record<string, any>, index: number) => {
-        const group = groups[index];
+        let group = groups[index];
 
         if (!group) {
-          await this.addGroup().setValue(val);
+          group = await this.addGroup();
+          await group.setValue(val);
         } else {
           await group.setValue(val);
         }
@@ -166,14 +159,14 @@ export default class Collection extends Element {
     return this.validation.valid && (!this.groups || !this.groups.some(g => !g.valid));
   }
 
-  reset() {
+  async reset() {
     this.cleanUp();
 
-    if (this.groups) {
-      this.groups.forEach((group: any) => group.reset());
-    }
-
     this.validation.reset();
+
+    if (this.groups) {
+      await Promise.all(this.groups.map(async (group: any) => await group.reset()));
+    }
   }
 
   async clear() {
@@ -184,53 +177,61 @@ export default class Collection extends Element {
     }
   }
 
-  addGroup() {
-    if (!this.groups) {
-      this.groups = [];
-    }
-
-    const { schema, dummy } = this._d;
-    const groupItem = genItem(schema, dummy.getSchema(), this);
-
-    this.groups.push(groupItem);
-
-    groupItem.on('changed:formy', (...args: any[]) => onGroupChanged.apply(this, args), { noOff: true });
-
-    return groupItem;
-  }
-
-  removeGroup(itemOrIndex: CollectionItem | number) {
-    const index = itemOrIndex instanceof CollectionItem ? itemOrIndex.index : itemOrIndex;
-    const group = this.groups && this.groups[index];
-
-    if (group) {
-      const value = this._d.value;
-
-      (this.groups as CollectionItem[]).splice(index, 1);
-
-      if (value) {
-        value.splice(index, 1);
+  async addGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(): Promise<
+    CollectionItemInstance<T>
+  > {
+    return new Promise(resolve => {
+      if (!this.groups) {
+        this.groups = [];
       }
 
-      onCollectionChanged.call(this, group);
+      const { schema, dummy } = this._d;
+      const groupItem = genItem(schema, dummy.getSchema(), this);
+
+      this.groups.push(groupItem);
+
+      addFieldOrGroup.call(this, groupItem, onGroupChanged, onGroupValidated, () => resolve(groupItem));
+    });
+  }
+
+  async removeGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(
+    itemOrIndex: CollectionItem | number
+  ): Promise<CollectionItemInstance<T> | null> {
+    const index = itemOrIndex instanceof CollectionItem ? itemOrIndex.index : itemOrIndex;
+    const removed = (this.groups && this.groups[index]) || null;
+
+    if (removed) {
+      (this.groups as CollectionItem[]).splice(index, 1);
+
+      await updateColectionValue.call(this);
+
+      this.emit('groupremoved', removed, this).emit('changed', this);
     }
+
+    return removed as CollectionItemInstance<T> | null;
   }
 
   async validate({ cascade = true }: { cascade?: boolean } = {}) {
     this.emit('validate', this);
 
+    this.pender.add('formy');
+
+    const _d = this._d;
+    const value = _d.tempValue || this.value;
+
     if (cascade && this.groups) {
       await Promise.all(this.groups.map(async (group: any) => await group.validate()));
     }
 
-    await this.validation.validate(this.value, {}, this.props, this);
+    await this.validation.validate(value, {}, this.props, this);
 
-    if (!this.valid) {
-      this._d.value = null;
-    }
+    _d.value = this.valid ? value : null;
+    _d.tempValue = null;
 
     this.pender.kill('formy');
 
     this.emit('validated', this);
+
+    return this.valid;
   }
 }
