@@ -138,10 +138,11 @@ export type FieldInstance<
   setRaw(value: any): Promise<void>;
   value: FieldValue;
   setValue(value: any): Promise<any>;
+  cast(value: any): FieldValue;
   setCheckedValue(checkedValue: any): void;
   readonly checked: any;
   isValid(): boolean;
-  reset(): void;
+  reset(): Promise<void>;
   clear(): Promise<void>;
   validate(): Promise<void>;
 } & ElementInstance;
@@ -155,13 +156,20 @@ export type GroupInstance<
   readonly type: 'enum';
   readonly formType: 'group';
   readonly value: Record<string, any>;
-  setValue(obj: Record<string, any>): Promise<Record<string, any>>;
+  setValue(obj: Record<string, any>): Promise<Record<string, any> | null>;
   shake(options?: { cascade?: boolean }): void;
   isValid(): boolean;
-  reset(): void;
+  reset(): Promise<void>;
   clear(): Promise<void>;
-  addField(schema: ElementsSchemas, options?: { at?: number }): ElementInstance;
-  removeField(elementOrId: Record<string, any> | string): void;
+  addField(
+    schema: ElementsSchemas,
+    {
+      at
+    }?: {
+      at?: number;
+    }
+  ): Promise<Element>;
+  removeField(elementOrId: Record<string, any> | string): Promise<Element | null>;
   getSchema(): GroupSchema;
   validate(options?: { cascade?: boolean }): Promise<void>;
 } & ElementInstance;
@@ -175,13 +183,20 @@ export type FormInstance<
   readonly type: 'enum';
   readonly formType: 'group';
   readonly value: Record<string, any>;
-  setValue(obj: Record<string, any>): Promise<Record<string, any>>;
+  setValue(obj: Record<string, any>): Promise<Record<string, any> | null>;
   shake(options?: { cascade?: boolean }): void;
   isValid(): boolean;
-  reset(): void;
+  reset(): Promise<void>;
   clear(): Promise<void>;
-  addField(schema: ElementsSchemas, options?: { at?: number }): ElementInstance;
-  removeField(elementOrId: Record<string, any> | string): void;
+  addField(
+    schema: ElementsSchemas,
+    {
+      at
+    }?: {
+      at?: number;
+    }
+  ): Promise<Element>;
+  removeField(elementOrId: Record<string, any> | string): Promise<Element | null>;
   getSchema(): GroupSchema;
   validate(options?: { cascade?: boolean }): Promise<void>;
 } & ElementInstance;
@@ -197,23 +212,31 @@ export type CollectionInstance<
   readonly value: any[];
   setValue(
     value: any[],
-    {
-      from,
-      autoAdd
-    }?: {
+    options?: {
       from?: number;
       autoAdd?: boolean;
     }
   ): Promise<any[]>;
   shake(options?: { cascade?: boolean }): void;
   isValid(): boolean;
-  reset(): void;
+  reset(): Promise<void>;
   clear(): Promise<void>;
-  addGroup(): CollectionItemInstance<T>;
-  removeGroup(itemOrIndex: CollectionItemInstance<T> | number): void;
+  addGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(): Promise<
+    CollectionItemInstance<T>
+  >;
+  removeGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(
+    itemOrIndex: CollectionItemInstance<T> | number
+  ): Promise<CollectionItemInstance<T> | null>;
   validate(options?: { cascade?: boolean }): Promise<void>;
-  addField(schema: ElementsSchemas, options?: { at?: number }): ElementInstance[];
-  removeField(id: string): (ElementInstance | null)[];
+  addField(
+    schema: ElementsSchemas,
+    options?:
+      | {
+          at?: number | undefined;
+        }
+      | undefined
+  ): Promise<void>;
+  removeField(id: string): Promise<void>;
   getSchema(): CollectionSchema;
 } & ElementInstance;
 

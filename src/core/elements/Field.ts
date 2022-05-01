@@ -1,14 +1,14 @@
 import { isNumeric } from '@vue-formily/util';
-import { FieldSchema, FieldType, FieldValue } from './types';
+import { FieldSchema, FieldType, FieldValue, ReadonlySchema } from './types';
 
 import Element, { ElementData } from './Element';
 import { toString, readonlyDumpProp, isUndefined, throwFormilyError } from '../../utils';
 import { normalizeSchema } from '../../helpers';
+import { FieldInstance } from './instanceTypes';
 
 type FieldData = ElementData & {
   error: string | null;
   raw: string;
-  typed: FieldValue;
   checkedValue: any;
   formatted: string | null;
 };
@@ -49,8 +49,8 @@ export default class Field extends Element {
     return normalizeSchema(schema, type);
   }
 
-  static create(schema: FieldSchema, parent?: Element | null): Field {
-    return new Field(schema, parent);
+  static create<F extends ReadonlySchema<FieldSchema>>(schema: FieldSchema, parent?: Element | null) {
+    return (new Field((schema as unknown) as FieldSchema, parent) as unknown) as FieldInstance<F>;
   }
 
   readonly default!: any;
@@ -69,7 +69,6 @@ export default class Field extends Element {
 
     const data = this._d;
 
-    data.typed = null;
     data.formatted = null;
 
     this.setCheckedValue(schema.checkedValue);
@@ -103,7 +102,7 @@ export default class Field extends Element {
   }
 
   get value() {
-    return this._d.typed;
+    return this.valid ? this.cast(this.raw) : null;
   }
 
   set value(value: any) {
@@ -129,6 +128,10 @@ export default class Field extends Element {
     return this.value;
   }
 
+  cast(value: any) {
+    return casts[this.type](value);
+  }
+
   setCheckedValue(checkedValue: any) {
     this._d.checkedValue = checkedValue;
   }
@@ -147,10 +150,11 @@ export default class Field extends Element {
     return this.validation.valid;
   }
 
-  reset() {
-    this._d.raw = this.default !== null ? this.default : '';
+  async reset() {
     this.cleanUp();
     this.validation.reset();
+
+    await this.setRaw(this.default !== null ? this.default : '');
   }
 
   async clear() {
@@ -160,23 +164,22 @@ export default class Field extends Element {
   }
 
   async validate() {
-    const raw = this.raw;
-    const cast = casts[this.type];
-    const data = this._d;
-    const format = (data.schema as FieldSchema).format;
-
     this.pender.add('formy');
+
+    const _d = this._d;
 
     this.emit('validate', this);
 
-    const typed = cast(raw);
-    const { valid } = await this.validation.validate(typed, {}, this.props, this);
+    await this.validation.validate(this.cast(this.raw), {}, this.props, this);
 
-    data.typed = typed !== null && valid ? typed : null;
-    data.formatted = format ? this.format(format, this.type) : null;
+    const format = (_d.schema as FieldSchema).format;
+
+    _d.formatted = format ? this.format(format, this.type) : null;
 
     this.pender.kill('formy');
 
     this.emit('validated', this);
+
+    return this.valid;
   }
 }
