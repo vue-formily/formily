@@ -144,7 +144,7 @@ export type FieldInstance<
   isValid(): boolean;
   reset(): Promise<void>;
   clear(): Promise<void>;
-  validate(): Promise<void>;
+  validate(): Promise<boolean>;
 } & ElementInstance;
 
 export type GroupInstance<
@@ -171,7 +171,7 @@ export type GroupInstance<
   ): Promise<Element>;
   removeField(elementOrId: Record<string, any> | string): Promise<Element | null>;
   getSchema(): GroupSchema;
-  validate(options?: { cascade?: boolean }): Promise<void>;
+  validate(options?: { cascade?: boolean }): Promise<boolean>;
 } & ElementInstance;
 
 export type FormInstance<
@@ -198,7 +198,7 @@ export type FormInstance<
   ): Promise<Element>;
   removeField(elementOrId: Record<string, any> | string): Promise<Element | null>;
   getSchema(): GroupSchema;
-  validate(options?: { cascade?: boolean }): Promise<void>;
+  validate(options?: { cascade?: boolean }): Promise<boolean>;
 } & ElementInstance;
 
 export type CollectionInstance<
@@ -227,7 +227,7 @@ export type CollectionInstance<
   removeGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(
     itemOrIndex: CollectionItemInstance<T> | number
   ): Promise<CollectionItemInstance<T> | null>;
-  validate(options?: { cascade?: boolean }): Promise<void>;
+  validate(options?: { cascade?: boolean }): Promise<boolean>;
   addField(
     schema: ElementsSchemas,
     options?:

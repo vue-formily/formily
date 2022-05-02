@@ -2,8 +2,16 @@ import { findIndex, isPlainObject } from '@vue-formily/util';
 import { CollectionSchema, CollectionItemSchema, ElementsSchemas, GroupSchema, ReadonlySchema } from './types';
 import Element, { ElementData } from './Element';
 import Group from './Group';
-import { cascadeRule, normalizeSchema, updateValue, addFieldOrGroup } from '../../helpers';
-import { logMessage, throwFormilyError } from '../../utils';
+import {
+  cascadeRule,
+  normalizeSchema,
+  updateValue,
+  addFieldOrGroup,
+  resetItems,
+  clearItems,
+  validateItems
+} from '../../helpers';
+import { isUndefined, logMessage, throwFormilyError } from '../../utils';
 import { CollectionInstance, CollectionItemInstance } from './instanceTypes';
 
 const FORM_TYPE = 'collection';
@@ -27,14 +35,6 @@ type CollectionData = Omit<ElementData, 'schema'> & {
   dummy: CollectionItem;
   tempValue?: any;
 };
-
-async function onGroupChanged(this: Collection, ...args: any[]) {
-  this.emit('changed', ...args, this);
-}
-
-async function onGroupValidated(this: Collection) {
-  await updateColectionValue.call(this);
-}
 
 async function updateColectionValue(this: Collection) {
   await updateValue.call(this, this.groups);
@@ -81,12 +81,13 @@ export default class Collection extends Element {
   constructor(schema: CollectionSchema, parent?: Element | null) {
     super(Collection.accept(schema), parent);
 
+    const { value } = schema;
     const data = this._d;
 
     data.value = null;
     data.dummy = genItem(data.schema, data.schema.group, this);
 
-    this.emit('created', this);
+    this.setValue(!isUndefined(value) ? value : []).then(() => this.emit('created', this));
   }
 
   get type() {
@@ -129,7 +130,7 @@ export default class Collection extends Element {
       throwFormilyError(logMessage('Invalid value, Group value must be an object'));
     }
 
-    const groups = this.groups ? this.groups.slice(from) : [];
+    const groups = this.groups.slice(from);
 
     await Promise.all(
       value.slice(0, autoAdd ? value.length : groups.length).map(async (val: Record<string, any>, index: number) => {
@@ -150,47 +151,39 @@ export default class Collection extends Element {
   shake({ cascade = true }: { cascade?: boolean } = {}) {
     super.shake();
 
-    if (cascade && this.groups) {
+    if (cascade) {
       this.groups.forEach(group => group.shake());
     }
   }
 
   isValid(): boolean {
-    return this.validation.valid && (!this.groups || !this.groups.some(g => !g.valid));
+    return this.validation.valid && !this.groups.some(g => !g.valid);
   }
 
   async reset() {
-    this.cleanUp();
-
-    this.validation.reset();
-
-    if (this.groups) {
-      await Promise.all(this.groups.map(async (group: any) => await group.reset()));
-    }
+    await resetItems.call(this, this.groups);
   }
 
   async clear() {
-    this.cleanUp();
-
-    if (this.groups) {
-      await Promise.all(this.groups.map(async (group: any) => await group.clear()));
-    }
+    await clearItems.call(this, this.groups);
   }
 
   async addGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(): Promise<
     CollectionItemInstance<T>
   > {
     return new Promise(resolve => {
-      if (!this.groups) {
-        this.groups = [];
-      }
-
       const { schema, dummy } = this._d;
       const groupItem = genItem(schema, dummy.getSchema(), this);
 
       this.groups.push(groupItem);
 
-      addFieldOrGroup.call(this, groupItem, onGroupChanged, onGroupValidated, () => resolve(groupItem));
+      addFieldOrGroup.call(
+        this,
+        groupItem,
+        (...args) => this.emit('groupchanged', ...args),
+        () => updateColectionValue.call(this),
+        () => resolve(groupItem)
+      );
     });
   }
 
@@ -205,33 +198,13 @@ export default class Collection extends Element {
 
       await updateColectionValue.call(this);
 
-      this.emit('groupremoved', removed, this).emit('changed', this);
+      this.emit('groupremoved', removed, this);
     }
 
     return removed as CollectionItemInstance<T> | null;
   }
 
-  async validate({ cascade = true }: { cascade?: boolean } = {}) {
-    this.emit('validate', this);
-
-    this.pender.add('formy');
-
-    const _d = this._d;
-    const value = _d.tempValue || this.value;
-
-    if (cascade && this.groups) {
-      await Promise.all(this.groups.map(async (group: any) => await group.validate()));
-    }
-
-    await this.validation.validate(value, {}, this.props, this);
-
-    _d.value = this.valid ? value : null;
-    _d.tempValue = null;
-
-    this.pender.kill('formy');
-
-    this.emit('validated', this);
-
-    return this.valid;
+  validate(options: { cascade?: boolean } = {}) {
+    return validateItems.call(this, options, this.groups);
   }
 }

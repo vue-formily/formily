@@ -20,6 +20,7 @@ export type ElementsSchemas<I = string> = FieldSchema<I> | GroupSchema<I> | Coll
 export interface GroupSchema<I = string> extends ElementSchema<I> {
   formType: 'group';
   fields: ElementsSchemas<I>[];
+  value?: any;
 }
 
 export type CollectionItemSchema<I = string> = Omit<GroupSchema<I>, 'formId' | 'formType'>;
@@ -27,6 +28,7 @@ export type CollectionItemSchema<I = string> = Omit<GroupSchema<I>, 'formId' | '
 export interface CollectionSchema<I = string> extends ElementSchema<I> {
   formType: 'collection';
   group: CollectionItemSchema<I>;
+  value?: any;
 }
 
 export type FormSchema<I = string> = GroupSchema<I>;

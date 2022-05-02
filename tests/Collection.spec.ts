@@ -1,6 +1,10 @@
+/* eslint-disable jest/expect-expect */
+/* eslint-disable jest/no-disabled-tests */
+/* eslint-disable jest/valid-title */
 import { createFormily, defineSchema } from '@/index';
 import { Collection, Field, Group } from '@/core/elements';
 import { required } from './helpers/rules';
+import flushPromises from 'flush-promises';
 
 const formily = createFormily();
 
@@ -489,5 +493,53 @@ describe('Collection', () => {
 
     expect(collection.valid).toBe(false);
     expect(collection.value).toBe(null);
+  });
+
+  it('Can listen', async () => {
+    const s = defineSchema({
+      ...schema,
+      value: [
+        {
+          a: 'a'
+        }
+      ],
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
+    let o1;
+    let v1;
+    let c: any;
+    let g: any;
+
+    collection
+      .on('changed', async (value, old, coll) => {
+        o1 = old;
+        v1 = value;
+        c = coll;
+      })
+      .on('groupchanged', async (value, old, gr) => {
+        g = gr;
+      });
+
+    await flushPromises();
+
+    expect(o1).toEqual(null);
+    expect(v1).toEqual([{ a: 'a' }]);
+    expect(c.value).toEqual([{ a: 'a' }]);
+    expect(g.value).toEqual({ a: 'a' });
   });
 });

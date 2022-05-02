@@ -499,6 +499,30 @@ describe('Group', () => {
     });
   });
 
+  it('Can listen', async () => {
+    const group = createGroup({
+      formId: 'group_test',
+      formType: 'group',
+      fields: [
+        {
+          formType: 'field',
+          formId: 'a',
+          value: 'a'
+        }
+      ]
+    });
+
+    group
+      .on('changed', async (value, old, g) => {
+        expect(old).toEqual(null);
+        expect(value).toEqual({ a: 'a' });
+        expect(g.value).toEqual({ a: 'a' });
+      })
+      .on('fieldchanged', async (value, old, f) => {
+        expect(f.value).toEqual('a');
+      });
+  });
+
   it('Can get schema', async () => {
     const group = createGroup({
       formId: 'group_test',

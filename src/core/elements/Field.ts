@@ -60,21 +60,17 @@ export default class Field extends Element {
   constructor(schema: FieldSchema, parent?: Element | null) {
     super(Field.accept(schema), parent);
 
-    const { default: defu } = schema;
+    const { value, default: defu } = schema;
 
     const hasDefault = !isUndefined(defu);
     readonlyDumpProp(this, 'default', hasDefault ? defu : null);
-
-    const value = !isUndefined(schema.value) ? schema.value : defu;
 
     const data = this._d;
 
     data.formatted = null;
 
     this.setCheckedValue(schema.checkedValue);
-    this.setValue(value);
-
-    this.emit('created', this);
+    this.setValue(!isUndefined(value) ? value : defu).then(() => this.emit('created', this));
   }
 
   get formType() {

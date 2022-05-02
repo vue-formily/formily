@@ -144,12 +144,15 @@ export function genValueFromElements(value: any, elements: any[]) {
 
 export async function updateValue(this: any, elements: any[]) {
   const { _d, type } = this;
+  const curValue = this.value ? merge({}, this.value) : null;
 
   _d.tempValue = genValueFromElements(type === 'enum' ? {} : [], elements);
 
   if (this.options.silent) {
     await this.validate({ cascade: false });
   }
+
+  this.emit('changed', this.value, curValue, this);
 }
 
 export function addFieldOrGroup(
@@ -166,8 +169,46 @@ export function addFieldOrGroup(
   const tempEventName = `validated:__${this.htmlName}`;
 
   this.on(tempEventName, () => {
-    this.emit(`${this.formType}added`, item).emit('changed', this).off(tempEventName);
+    this.emit(`${this.formType}added`, item).off(tempEventName);
 
     done();
   });
+}
+
+export async function resetItems(this: any, items: any[] = []) {
+  this.cleanUp();
+
+  this.validation.reset();
+
+  await Promise.all(items.map(async (item: any) => await item.reset()));
+}
+
+export async function clearItems(this: any, items: any[] = []) {
+  this.cleanUp();
+
+  await Promise.all(items.map(async (item: any) => await item.clear()));
+}
+
+export async function validateItems(this: any, { cascade = true }: { cascade?: boolean } = {}, items: any[]) {
+  this.emit('validate', this);
+
+  this.pender.add('formy');
+
+  const _d = this._d;
+  const value = _d.tempValue || this.value;
+
+  if (cascade) {
+    await Promise.all(items.map(async (group: any) => await group.validate()));
+  }
+
+  await this.validation.validate(value, {}, this.props, this);
+
+  _d.value = this.valid ? value : null;
+  _d.tempValue = null;
+
+  this.pender.kill('formy');
+
+  this.emit('validated', this);
+
+  return this.valid as boolean;
 }
