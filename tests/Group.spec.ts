@@ -523,6 +523,47 @@ describe('Group', () => {
       });
   });
 
+  it('Can trigger changed correctly', async () => {
+    const group = createGroup({
+      formId: 'group_test',
+      formType: 'group',
+      fields: [
+        {
+          formType: 'field',
+          formId: 'a'
+        }
+      ]
+    });
+
+    group.on('changed', async (value, old, g) => {
+      expect(old).toEqual(null);
+      expect(value).toEqual({
+        a: ''
+      });
+    });
+
+    const group2 = createGroup({
+      formId: 'group_test',
+      formType: 'group',
+      fields: [
+        {
+          formType: 'field',
+          formId: 'a',
+          rules: [required]
+        }
+      ]
+    });
+
+    let count = 0;
+    group2.on('changed', async () => {
+      count++;
+    });
+
+    await flushPromises();
+
+    expect(count).toEqual(0);
+  });
+
   it('Can get schema', async () => {
     const group = createGroup({
       formId: 'group_test',

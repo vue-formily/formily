@@ -86,7 +86,7 @@
     ]
   },
   "dependencies": {
-    "@vue-formily/util": "^0.1.0"
+    "@vue-formily/util": "^0.1.2"
   },
   "config": {
     "commitizen": {

@@ -1,5 +1,5 @@
 import { ElementsSchemas } from '../core/elements/types';
-import { findIndex, get, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
+import { findIndex, get, isEqual, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
 import { ValidationRuleSchema, Validator } from '../core/validations/types';
 import { isUndefined, def, isPromise, dumpProp, readonlyDef } from '../utils';
 import { formatter } from './formatter';
@@ -144,7 +144,7 @@ export function genValueFromElements(value: any, elements: any[]) {
 
 export async function updateValue(this: any, elements: any[]) {
   const { _d, type } = this;
-  const curValue = this.value ? merge({}, this.value) : null;
+  const curValue = this.value && merge({}, this.value);
 
   _d.tempValue = genValueFromElements(type === 'enum' ? {} : [], elements);
 
@@ -152,7 +152,9 @@ export async function updateValue(this: any, elements: any[]) {
     await this.validate({ cascade: false });
   }
 
-  this.emit('changed', this.value, curValue, this);
+  if (!isEqual(this.value, curValue)) {
+    this.emit('changed', this.value, curValue, this);
+  }
 }
 
 export function addFieldOrGroup(
