@@ -256,6 +256,35 @@ describe('Field', () => {
     expect(f.checked).toBe(true);
   });
 
+  it('Can invalidate', async () => {
+    const f = new Field({
+      formId: 'field_name',
+      formType: 'field',
+      checkedValue: 'test'
+    });
+
+    await flushPromises();
+
+    expect(f.valid).toBe(true);
+
+    f.invalidate();
+    f.shake();
+
+    expect(f.valid).toBe(false);
+    expect(f.error).toBe(null);
+
+    await f.reset();
+
+    expect(f.valid).toBe(true);
+    expect(f.error).toBe(null);
+
+    f.invalidate('test');
+    f.shake();
+
+    expect(f.valid).toBe(false);
+    expect(f.error).toBe('test');
+  });
+
   it('Should pending', async () => {
     jest.useFakeTimers();
 

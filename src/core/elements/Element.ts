@@ -1,4 +1,4 @@
-import { merge } from '@vue-formily/util';
+import { isString, merge } from '@vue-formily/util';
 import { ElementOptions, ElementSchema } from './types';
 import { genHtmlName, getProp, genProps } from '../../helpers';
 import { dumpProp, readonlyDumpProp, throwFormilyError } from '../../utils';
@@ -13,6 +13,7 @@ export interface ElementData {
   options: ElementOptions;
   data: Record<string, any>;
   shaked: boolean;
+  invalidated: string | boolean;
 }
 
 function genElementAncestors(elem: Element): any[] | null {
@@ -54,8 +55,6 @@ export default abstract class Element extends Objeto {
   props: Record<string, any> = {};
   pender = new Pender();
 
-  abstract isValid(): boolean;
-
   constructor(schema: ElementSchema, parent?: Element | null) {
     super();
 
@@ -67,6 +66,7 @@ export default abstract class Element extends Objeto {
 
     data.data = {};
     data.shaked = false;
+    data.invalidated = false;
 
     readonlyDumpProp(data, 'schema', schema);
 
@@ -107,11 +107,16 @@ export default abstract class Element extends Objeto {
   }
 
   get error() {
-    if (!this._d.shaked || this.valid) {
+    const {
+      _d: { shaked, invalidated },
+      validation: { errors }
+    } = this;
+
+    if (!shaked || this.valid) {
       return null;
     }
 
-    return this.validation.errors ? this.validation.errors[0] : null;
+    return invalidated === true ? null : isString(invalidated) ? invalidated : errors ? errors[0] : null;
   }
 
   get data() {
@@ -151,6 +156,10 @@ export default abstract class Element extends Objeto {
     return this.isValid();
   }
 
+  isValid() {
+    return !this._d.invalidated && this.validation.valid;
+  }
+
   getHtmlName() {
     return genHtmlName(this, this._d.ancestors);
   }
@@ -161,5 +170,10 @@ export default abstract class Element extends Objeto {
 
   cleanUp() {
     this._d.shaked = false;
+    this._d.invalidated = false;
+  }
+
+  invalidate(message?: string) {
+    this._d.invalidated = message || true;
   }
 }

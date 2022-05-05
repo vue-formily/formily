@@ -542,4 +542,48 @@ describe('Collection', () => {
     expect(c.value).toEqual([{ a: 'a' }]);
     expect(g.value).toEqual({ a: 'a' });
   });
+
+  it('Can invalidate', async () => {
+    const s = defineSchema({
+      ...schema,
+      group: {
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const collection = Collection.create(s);
+
+    await collection.addGroup();
+
+    collection.invalidate('test');
+
+    collection.shake();
+
+    expect(collection.value).toBe(null);
+    expect(collection.valid).toBe(false);
+    expect(collection.error).toBe('test');
+
+    await collection.reset();
+
+    (collection as any).groups[0].$a.invalidate('test');
+
+    collection.shake();
+
+    expect(collection.value).toBe(null);
+    expect(collection.valid).toBe(false);
+    expect(collection.error).toBe(null);
+    expect((collection as any).groups[0].$a.valid).toBe(false);
+    expect((collection as any).groups[0].$a.error).toBe('test');
+  });
 });

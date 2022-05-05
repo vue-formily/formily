@@ -446,7 +446,8 @@ describe('VueFormily', () => {
               group0 && group0.$added ? ` (6) ${group0.$added.value}` : '',
               form.$asignProp && form.$asignProp.props.test ? ` (7) ${form.$asignProp.props.test}` : '',
               form.$asignProp && form.$asignProp.props.testDepended ? ` (8) ${form.$asignProp.props.testDepended}` : '',
-              form.props.test ? ` (9) ${form.props.test}` : ''
+              form.props.test ? ` (9) ${form.props.test}` : '',
+              form.$field.error ? ` (10) ${form.$field.error}` : ''
             ]
           );
         }
@@ -535,5 +536,11 @@ describe('VueFormily', () => {
     await flushPromises();
 
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (5) group 1 (9) test');
+
+    test.$field.invalidate('invalidate');
+
+    await flushPromises();
+
+    expect(wrapper.find('#test').element.innerHTML).toBe('hi, null (5) group 1 (9) test (10) invalidate');
   });
 });

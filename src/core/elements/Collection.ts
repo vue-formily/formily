@@ -99,7 +99,7 @@ export default class Collection extends Element {
   }
 
   get value() {
-    return this._d.value;
+    return this.valid ? this._d.value : null;
   }
 
   async addField(schema: ElementsSchemas, options?: { at?: number }) {
@@ -157,7 +157,7 @@ export default class Collection extends Element {
   }
 
   isValid(): boolean {
-    return this.validation.valid && !this.groups.some(g => !g.valid);
+    return super.isValid() && !this.groups.some(g => !g.valid);
   }
 
   async reset() {

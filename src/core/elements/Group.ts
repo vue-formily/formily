@@ -90,7 +90,7 @@ export default class Group extends Element {
   }
 
   get value() {
-    return this._d.value;
+    return this.valid ? this._d.value : null;
   }
 
   getSchema(): GroupSchema {
@@ -127,7 +127,7 @@ export default class Group extends Element {
   }
 
   isValid(): boolean {
-    return this.validation.valid && !this.fields.some(field => !field.valid);
+    return super.isValid() && !this.fields.some(field => !field.valid);
   }
 
   async reset() {

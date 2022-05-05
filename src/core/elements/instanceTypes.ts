@@ -78,6 +78,7 @@ export type ElementInstance = {
   shake(): void;
   cleanUp(): void;
   getSchema(): Record<string, any>;
+  invalidate(message?: string | undefined): void;
 } & Objeto;
 
 export type CustomValidationProperty<R> = R extends Record<string, any>

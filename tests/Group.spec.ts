@@ -523,6 +523,40 @@ describe('Group', () => {
       });
   });
 
+  it('Can Invalidate', async () => {
+    const group = createGroup({
+      formId: 'group_test',
+      formType: 'group',
+      fields: [
+        {
+          formType: 'field',
+          formId: 'a',
+          value: 'a'
+        }
+      ]
+    });
+
+    group.invalidate('test');
+
+    group.shake();
+
+    expect(group.value).toBe(null);
+    expect(group.valid).toBe(false);
+    expect(group.error).toBe('test');
+
+    await group.reset();
+
+    (group as any).$a.invalidate('test');
+
+    group.shake();
+
+    expect(group.value).toBe(null);
+    expect(group.valid).toBe(false);
+    expect(group.error).toBe(null);
+    expect((group as any).$a.valid).toBe(false);
+    expect((group as any).$a.error).toBe('test');
+  });
+
   it('Can trigger changed correctly', async () => {
     const group = createGroup({
       formId: 'group_test',

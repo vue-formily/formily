@@ -142,10 +142,6 @@ export default class Field extends Element {
     return !isUndefined(checkedValue) && toString(this.value) === checkedValue;
   }
 
-  isValid() {
-    return this.validation.valid;
-  }
-
   async reset() {
     this.cleanUp();
     this.validation.reset();
