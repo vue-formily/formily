@@ -335,6 +335,7 @@ describe('Group', () => {
     expect(group.$b.$c.value).toBe('abc');
 
     await group.$a.setValue('hello');
+    await flushPromises();
 
     expect(group.value).toEqual({
       a: 'hello',

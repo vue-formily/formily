@@ -26,7 +26,3 @@ export function def(obj: any, key: string, descriptor?: Record<string, any>) {
     ...descriptor
   });
 }
-
-export function readonlyDef(obj: any, key: string, get: () => any, descriptor?: Record<string, any>) {
-  return def(obj, key, { get, ...descriptor });
-}

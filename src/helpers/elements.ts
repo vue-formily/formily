@@ -1,7 +1,7 @@
 import { ElementsSchemas } from '../core/elements/types';
 import { findIndex, get, isEqual, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
 import { ValidationRuleSchema, Validator } from '../core/validations/types';
-import { isUndefined, def, isPromise, dumpProp, readonlyDef } from '../utils';
+import { isUndefined, def, isPromise, dumpProp } from '../utils';
 import { formatter } from './formatter';
 
 export function cascadeRule<T extends ElementsSchemas>(fieldSchema: T, parentRules?: ValidationRuleSchema[]): T {
@@ -136,7 +136,7 @@ export function genValueFromElements(value: any, elements: any[]) {
       return null;
     }
 
-    readonlyDef(value, isPlainObject(value) ? element.model : element.index, () => element.value);
+    value[isPlainObject(value) ? element.model : element.index] = element.value;
   }
 
   return value;
