@@ -156,8 +156,6 @@ export default class Field extends Element {
   }
 
   async validate() {
-    this.pender.add('formy');
-
     const _d = this._d;
 
     this.emit('validate', this);
@@ -167,8 +165,6 @@ export default class Field extends Element {
     const format = (_d.schema as FieldSchema).format;
 
     _d.formatted = format ? this.format(format, this.type) : null;
-
-    this.pender.kill('formy');
 
     this.emit('validated', this);
 

@@ -284,41 +284,4 @@ describe('Field', () => {
     expect(f.valid).toBe(false);
     expect(f.error).toBe('test');
   });
-
-  it('Should pending', async () => {
-    jest.useFakeTimers();
-
-    const f = new Field({
-      formId: 'field_name',
-      formType: 'field',
-      checkedValue: 'test',
-      props: {
-        test(this: any) {
-          this.pender.add('test');
-
-          expect(this.pending).toBe(true);
-
-          setTimeout(() => {
-            this.pender.kill('test');
-
-            expect(this.pending).toBe(false);
-          }, 200);
-
-          return 'test';
-        }
-      }
-    });
-
-    expect(f.checked).toBe(false);
-
-    f.raw = 'test';
-
-    expect(f.props.test).toBe('test');
-
-    await flushPromises();
-
-    expect(f.checked).toBe(true);
-
-    jest.runAllTimers();
-  });
 });

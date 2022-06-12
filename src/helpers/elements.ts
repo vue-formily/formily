@@ -194,8 +194,6 @@ export async function clearItems(this: any, items: any[] = []) {
 export async function validateItems(this: any, { cascade = true }: { cascade?: boolean } = {}, items: any[]) {
   this.emit('validate', this);
 
-  this.pender.add('formy');
-
   const _d = this._d;
   const value = _d.tempValue || this.value;
 
@@ -207,8 +205,6 @@ export async function validateItems(this: any, { cascade = true }: { cascade?: b
 
   _d.value = this.valid ? value : null;
   _d.tempValue = null;
-
-  this.pender.kill('formy');
 
   this.emit('validated', this);
 

@@ -8,7 +8,7 @@ import { ValidationInstance } from '../elements/instanceTypes';
 export type RuleData = {
   error: string | null;
   valid: boolean;
-  schema: RuleSchema | Validator;
+  pending: boolean;
   container: ValidationInstance | null;
 };
 
@@ -18,6 +18,7 @@ function isRule(input: Rule | RuleSchema | Validator): input is Rule {
 
 export default class Rule extends Objeto {
   readonly name!: string;
+  readonly schema!: RuleSchema | Validator;
   protected _d!: RuleData;
   message!: string | null;
   validator?: Validator | null;
@@ -27,13 +28,13 @@ export default class Rule extends Objeto {
 
     const _d = this._d;
 
-    _d.container = container;
-
-    readonlyDumpProp(_d, 'schema', isRule(rule) ? rule.getSchema() : rule);
+    readonlyDumpProp(this, 'schema', isRule(rule) ? rule.getSchema() : rule);
     readonlyDumpProp(this, 'name', rule.name || Date.now());
 
     dumpProp(this, 'message', null);
 
+    _d.container = container;
+    _d.pending = false;
     _d.error = null;
     _d.valid = true;
 
@@ -46,12 +47,12 @@ export default class Rule extends Objeto {
     }
   }
 
-  get context(): Record<string, any> | null {
-    return this.container ? this.container.context : null;
-  }
-
   get container() {
     return this._d.container;
+  }
+
+  get context(): Record<string, any> | null {
+    return this.container ? this.container.context : null;
   }
 
   get valid() {
@@ -62,12 +63,12 @@ export default class Rule extends Objeto {
     return this._d.error;
   }
 
-  get schema() {
-    return this.getSchema();
+  get pending() {
+    return this._d.pending;
   }
 
   getSchema(): RuleSchema | Validator {
-    return this._d.schema;
+    return this.schema;
   }
 
   setMessage(message: string | null = null) {
@@ -80,6 +81,8 @@ export default class Rule extends Objeto {
   }
 
   async validate(value: any, props?: Record<string, any>, ...args: any[]): Promise<Rule> {
+    this._d.pending = true;
+
     this.emit('validate', this);
 
     const { _d: data } = this;
@@ -100,6 +103,8 @@ export default class Rule extends Objeto {
 
     data.error = error;
     data.valid = valid;
+
+    this._d.pending = false;
 
     this.emit('validated', this);
 

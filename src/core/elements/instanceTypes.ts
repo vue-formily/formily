@@ -9,11 +9,11 @@ import {
 } from './types';
 import { UnionToIntersection } from '../../utils-types';
 import Objeto from '../Objeto';
-import Pender from '../Pender';
 import { RuleSchema, Validator } from '../validations/types';
 
 export type RuleInstance = {
   readonly name: string;
+  readonly pending: boolean;
   message: string | null;
   validator?: Validator | null;
   context: Record<string, any> | null;
@@ -27,8 +27,9 @@ export type RuleInstance = {
 } & Objeto;
 
 export type ValidationInstance = {
+  readonly pending: boolean;
+  readonly context: Record<string, any> | null;
   rules: RuleInstance[];
-  context: Record<string, any> | null;
   valid: boolean;
   errors: (string | null)[] | null;
   schema: (RuleSchema<string> | Validator | undefined)[] | null;
@@ -59,7 +60,6 @@ export type ElementInstance = {
   props: Record<string, any>;
   shaked: boolean;
   pending: boolean;
-  pender: Pender;
   readonly options: ElementOptions;
   readonly validation: ValidationInstance;
   readonly error: string;

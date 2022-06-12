@@ -4,7 +4,6 @@ import { genHtmlName, getProp, genProps } from '../../helpers';
 import { dumpProp, readonlyDumpProp, throwFormilyError } from '../../utils';
 import Objeto from '../Objeto';
 import { Validation } from '../validations';
-import Pender from '../Pender';
 
 export interface ElementData {
   ancestors: any[] | null;
@@ -53,7 +52,6 @@ export default abstract class Element extends Objeto {
   protected _d!: ElementData;
 
   props: Record<string, any> = {};
-  pender = new Pender();
 
   constructor(schema: ElementSchema, parent?: Element | null) {
     super();
@@ -87,7 +85,7 @@ export default abstract class Element extends Objeto {
   }
 
   get pending() {
-    return this.pender.isPending();
+    return this.validation.pending;
   }
 
   get model() {

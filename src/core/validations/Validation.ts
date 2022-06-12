@@ -25,6 +25,10 @@ export default class Validation extends Objeto {
     return this._d.context;
   }
 
+  get pending() {
+    return !this.rules.some(rule => !rule.pending);
+  }
+
   get valid() {
     return !this.rules.some(rule => !rule.valid);
   }

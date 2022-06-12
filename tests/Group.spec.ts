@@ -20,6 +20,37 @@ describe('Group', () => {
     }).toThrowError('[vue-formily] (formId: "group_test") `fields` must be an array.');
   });
 
+  it('Should emit created after setting value', () => {
+    createGroup(
+      defineSchema({
+        formId: 'group_test',
+        formType: 'group',
+        value: {
+          a: 'test'
+        },
+        on: {
+          created(this: any) {
+            expect(this.value).toEqual({
+              a: 'test'
+            });
+          }
+        },
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field',
+            rules: [
+              {
+                ...required,
+                message: 'abc'
+              }
+            ]
+          }
+        ]
+      })
+    );
+  });
+
   it('Can access field from index signature', () => {
     const group = createGroup(
       defineSchema({

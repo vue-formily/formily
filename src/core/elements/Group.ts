@@ -76,9 +76,9 @@ export default class Group extends Element {
 
     this._d.value = null;
 
-    Promise.all(schema.fields.map(async field => await this.addField(field)));
-
-    this.setValue(!isUndefined(value) ? value : {}).then(() => this.emit('created', this));
+    Promise.all(schema.fields.map(async field => await this.addField(field))).then(async () =>
+      this.setValue(!isUndefined(value) ? value : {}).then(() => this.emit('created', this))
+    );
   }
 
   get type() {
