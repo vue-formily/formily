@@ -118,7 +118,7 @@ describe('Group', () => {
     expect(group.$a.validation.required).toBeInstanceOf(Rule);
     expect(group.$a.validation.required.message).toBe('test');
     expect(group.$b.validation.required.valid).toBe(false);
-    expect(group.$b.validation.required.message).toBe(null);
+    expect(group.$b.validation.required.message).toBe(undefined);
   });
 
   it('Can validate', async () => {
@@ -280,7 +280,7 @@ describe('Group', () => {
       })
     );
 
-    group.$a.addProps({ test: true });
+    group.$a.props.test = true;
 
     // set value to pass required rule
     await group.$a.setValue('test');
@@ -641,7 +641,8 @@ describe('Group', () => {
         },
         {
           name: 'test',
-          cascade: true
+          cascade: true,
+          validator: () => true
         }
       ],
       fields: [

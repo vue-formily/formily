@@ -4,14 +4,10 @@ export type Validator = (
   ...args: any[]
 ) => string | boolean | Promise<string | boolean>;
 
-export interface RuleSchema<N = string> {
-  validator?: Validator;
+export interface RuleSchema<N = string | number> {
+  validator: Validator;
   name?: N;
-  message?: string;
-}
-
-export interface ValidationOptions {
-  bails?: boolean;
+  message?: string | ((...args: any[]) => string);
 }
 
 export type ValidationRuleSchema<N = string> =

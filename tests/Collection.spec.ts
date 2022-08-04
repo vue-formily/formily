@@ -214,7 +214,7 @@ describe('Collection', () => {
     const collection = Collection.create(s);
     let newSchema = collection.getSchema();
 
-    expect(newSchema).toBe(s);
+    expect(newSchema).toEqual(s);
 
     collection.addField({
       formId: 'added',
@@ -223,7 +223,7 @@ describe('Collection', () => {
 
     newSchema = collection.getSchema();
 
-    expect(newSchema).toBe(s);
+    expect(newSchema).toEqual(s);
   });
 
   it('Can validate', async () => {

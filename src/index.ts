@@ -133,7 +133,7 @@ export type {
   CollectionInstance,
   CollectionItemInstance
 } from './core/elements/instanceTypes';
-export type { Validator, RuleSchema, ValidationOptions, ValidationRuleSchema } from './core/validations/types';
+export type { Validator, RuleSchema, ValidationRuleSchema } from './core/validations/types';
 export type { EventHandler, EventOptions, EventElement } from './core/Evento';
 
 export * from './core/validations';

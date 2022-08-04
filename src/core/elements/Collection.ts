@@ -30,8 +30,10 @@ export class CollectionItem extends Group {
 }
 
 type CollectionData = Omit<ElementData, 'schema'> & {
+  r: {
+    value: any[] | null;
+  };
   schema: CollectionSchema;
-  value: any[] | null;
   dummy: CollectionItem;
   tempValue?: any;
 };
@@ -84,7 +86,7 @@ export default class Collection extends Element {
     const { value } = schema;
     const data = this._d;
 
-    data.value = null;
+    data.r.value = null;
     data.dummy = genItem(data.schema, data.schema.group, this);
 
     this.setValue(!isUndefined(value) ? value : []).then(() => this.emit('created', this));
@@ -99,7 +101,7 @@ export default class Collection extends Element {
   }
 
   get value() {
-    return this.valid ? this._d.value : null;
+    return this.valid ? this._d.r.value : null;
   }
 
   async addField(schema: ElementsSchemas, options?: { at?: number }) {

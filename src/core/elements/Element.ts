@@ -1,18 +1,21 @@
 import { isString, merge } from '@vue-formily/util';
 import { ElementOptions, ElementSchema } from './types';
-import { genHtmlName, getProp, genProps } from '../../helpers';
-import { dumpProp, readonlyDumpProp, throwFormilyError } from '../../utils';
+import { genHtmlName, genProps } from '../../helpers';
+import { throwFormilyError } from '../../utils';
 import Objeto from '../Objeto';
 import { Validation } from '../validations';
 
 export interface ElementData {
+  r: {
+    shaked: boolean;
+    invalidated: string | boolean;
+    validation: Validation;
+    data: Record<string, any>;
+  };
   ancestors: any[] | null;
   schema: any;
-  validation: Validation;
   options: ElementOptions;
-  data: Record<string, any>;
-  shaked: boolean;
-  invalidated: string | boolean;
+  parent: Element | null;
 }
 
 function genElementAncestors(elem: Element): any[] | null {
@@ -47,8 +50,6 @@ export default abstract class Element extends Objeto {
     _options = merge(_options, options);
   }
 
-  readonly parent!: Element | null;
-
   protected _d!: ElementData;
 
   props: Record<string, any> = {};
@@ -58,30 +59,31 @@ export default abstract class Element extends Objeto {
 
     Element.accept(schema);
 
-    this.parent = parent || null;
-
     const data = this._d;
-
-    data.data = {};
-    data.shaked = false;
-    data.invalidated = false;
-
-    readonlyDumpProp(data, 'schema', schema);
-
+    const reactive = data.r;
     const { props = {}, on = {}, options, rules = [] } = schema;
 
-    dumpProp(data, 'ancestors', genElementAncestors(this));
-    dumpProp(data, 'options', merge({}, _options, options));
+    reactive.data = {};
+    reactive.shaked = false;
+    reactive.invalidated = false;
+    data.parent = parent || null;
+    data.schema = schema;
+    data.ancestors = genElementAncestors(this);
+    data.options = merge({}, _options, options);
 
-    this.addProps(props);
+    genProps.call(this, this.props, props);
 
     Object.keys(on).map(name => this.on(name, on[name]));
 
-    data.validation = new Validation(rules, this);
+    reactive.validation = new Validation(rules, this);
+  }
+
+  get parent() {
+    return this._d.parent;
   }
 
   get shaked() {
-    return this._d.shaked;
+    return this._d.r.shaked;
   }
 
   get pending() {
@@ -101,14 +103,15 @@ export default abstract class Element extends Objeto {
   }
 
   get validation() {
-    return this._d.validation;
+    return this._d.r.validation;
   }
 
   get error() {
     const {
-      _d: { shaked, invalidated },
+      shaked,
+      invalidated,
       validation: { errors }
-    } = this;
+    } = this._d.r;
 
     if (!shaked || this.valid) {
       return null;
@@ -118,7 +121,7 @@ export default abstract class Element extends Objeto {
   }
 
   get data() {
-    return this._d.data;
+    return this._d.r.data;
   }
 
   getSchema(): Record<string, any> {
@@ -134,14 +137,6 @@ export default abstract class Element extends Objeto {
     return schema;
   }
 
-  getProps(path: string, options?: { up?: boolean }) {
-    return getProp(this, path, options);
-  }
-
-  addProps(props: Record<string, any>, ...args: any[]) {
-    genProps.call(this, this.props, props, ...args);
-  }
-
   get formId(): string {
     return this.schema.formId;
   }
@@ -155,7 +150,7 @@ export default abstract class Element extends Objeto {
   }
 
   isValid() {
-    return !this._d.invalidated && this.validation.valid;
+    return !this._d.r.invalidated && this.validation.valid;
   }
 
   getHtmlName() {
@@ -163,15 +158,15 @@ export default abstract class Element extends Objeto {
   }
 
   shake() {
-    this._d.shaked = true;
+    this._d.r.shaked = true;
   }
 
   cleanUp() {
-    this._d.shaked = false;
-    this._d.invalidated = false;
+    this._d.r.shaked = false;
+    this._d.r.invalidated = false;
   }
 
   invalidate(message?: string) {
-    this._d.invalidated = message || true;
+    this._d.r.invalidated = message || true;
   }
 }

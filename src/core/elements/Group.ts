@@ -15,9 +15,11 @@ import { isUndefined, throwFormilyError } from '../../utils';
 import { GroupInstance } from './instanceTypes';
 
 type GroupData = Omit<ElementData, 'schema'> & {
-  schema: GroupSchema;
-  value: Record<string, any> | null;
+  r: {
+    value: Record<string, any> | null;
+  };
   tempValue?: any;
+  schema: GroupSchema;
 };
 
 const FORM_TYPE = 'group';
@@ -74,7 +76,7 @@ export default class Group extends Element {
 
     const { value } = schema;
 
-    this._d.value = null;
+    this._d.r.value = null;
 
     Promise.all(schema.fields.map(async field => await this.addField(field))).then(async () =>
       this.setValue(!isUndefined(value) ? value : {}).then(() => this.emit('created', this))
@@ -90,7 +92,7 @@ export default class Group extends Element {
   }
 
   get value() {
-    return this.valid ? this._d.value : null;
+    return this.valid ? this._d.r.value : null;
   }
 
   getSchema(): GroupSchema {

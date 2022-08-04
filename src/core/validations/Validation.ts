@@ -43,16 +43,12 @@ export default class Validation extends Objeto {
     return errors.length ? errors : null;
   }
 
-  get schema() {
-    return this.getSchema();
-  }
-
   getSchema() {
     const filtered = this.rules
       .map(rule => {
         const schema = rule.getSchema();
 
-        return (schema as any).__cascaded ? ((schema as any).__origin as RuleSchema | undefined) : schema;
+        return (schema as any).__cascaded ? ((schema as any).__origin as RuleSchema) : schema;
       })
       .filter(schema => !isUndefined(schema));
 
@@ -96,20 +92,11 @@ export default class Validation extends Objeto {
     this.rules.forEach(rule => rule.reset());
   }
 
-  async validate(
-    value: any,
-    options: { excluded?: string[]; get?: string[] } = {},
-    ...args: any[]
-  ): Promise<Validation> {
-    const { excluded, get } = options;
-
+  async validate(value: any, ...args: any[]): Promise<Validation> {
     this.emit('validate', this);
 
     if (this.rules) {
-      let rules = get ? this.rules.filter(({ name }) => get.includes(name)) : this.rules;
-      rules = excluded ? rules.filter(({ name }) => !excluded.includes(name)) : rules;
-
-      await Promise.all(rules.map(async rule => await rule.validate(value, ...args)));
+      await Promise.all(this.rules.map(async rule => await rule.validate(value, ...args)));
     }
 
     this.emit('validated', this);

@@ -372,7 +372,7 @@ describe('VueFormily', () => {
           ]
         },
         {
-          formId: 'asignProp',
+          formId: 'asyncProp',
           formType: 'field',
           props: {
             async test(this: any) {
@@ -444,8 +444,8 @@ describe('VueFormily', () => {
               (form as any).$added ? ` (4) ${(form as any).$added.value}` : '',
               group0 ? ` (5) ${group0.$test.value}` : '',
               group0 && group0.$added ? ` (6) ${group0.$added.value}` : '',
-              form.$asignProp && form.$asignProp.props.test ? ` (7) ${form.$asignProp.props.test}` : '',
-              form.$asignProp && form.$asignProp.props.testDepended ? ` (8) ${form.$asignProp.props.testDepended}` : '',
+              form.$asyncProp && form.$asyncProp.props.test ? ` (7) ${form.$asyncProp.props.test}` : '',
+              form.$asyncProp && form.$asyncProp.props.testDepended ? ` (8) ${form.$asyncProp.props.testDepended}` : '',
               form.props.test ? ` (9) ${form.props.test}` : '',
               form.$field.error ? ` (10) ${form.$field.error}` : ''
             ]
@@ -475,7 +475,7 @@ describe('VueFormily', () => {
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 1 (1) 1 (2) rule (3) rule (7) test (8) test depended');
 
     test.removeField('rule');
-    test.removeField('asignProp');
+    test.removeField('asyncProp');
 
     await flushPromises();
 

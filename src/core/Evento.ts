@@ -1,5 +1,3 @@
-import { dumpProp } from '../utils';
-
 export type EventHandler = (...args: any[]) => any;
 export type EventOptions = {
   noOff?: boolean;
@@ -53,7 +51,7 @@ export default class Evento {
   events!: Record<string, EventElement>;
 
   constructor() {
-    dumpProp(this, 'events', {});
+    this.events = {};
   }
 
   emit(name: string, ...args: any[]): Evento {

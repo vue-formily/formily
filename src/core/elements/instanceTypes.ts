@@ -12,16 +12,15 @@ import Objeto from '../Objeto';
 import { RuleSchema, Validator } from '../validations/types';
 
 export type RuleInstance = {
-  readonly name: string;
+  readonly name: string | number;
   readonly pending: boolean;
-  message: string | null;
-  validator?: Validator | null;
+  message?: string | ((...args: any[]) => string);
+  validator: Validator;
   context: Record<string, any> | null;
   container: Record<string, any> | null;
   valid: boolean;
   error: string | null;
-  schema: RuleSchema<string> | Validator;
-  setMessage(message?: string | null): void;
+  getSchema(): Validator | RuleSchema;
   reset(): void;
   validate(value: any, props?: Record<string, any> | undefined, ...args: any[]): Promise<RuleInstance>;
 } & Objeto;
@@ -32,8 +31,7 @@ export type ValidationInstance = {
   rules: RuleInstance[];
   valid: boolean;
   errors: (string | null)[] | null;
-  schema: (RuleSchema<string> | Validator | undefined)[] | null;
-  getSchema(): (RuleSchema<string> | Validator | undefined)[] | null;
+  getSchema(): (Validator | RuleSchema<string | number>)[] | null;
   addRule(
     ruleOrSchema: RuleInstance | Validator | RuleSchema,
     options?: {
@@ -57,20 +55,13 @@ export type ElementInstance = {
   readonly model: string;
   readonly type: string;
   readonly data: Record<string, any>;
-  props: Record<string, any>;
-  shaked: boolean;
-  pending: boolean;
+  readonly props: Record<string, any>;
+  readonly shaked: boolean;
+  readonly pending: boolean;
   readonly options: ElementOptions;
   readonly validation: ValidationInstance;
   readonly error: string;
   readonly schema: Record<string, any>;
-  getProps(
-    path: string,
-    options?: {
-      up?: boolean;
-    }
-  ): any;
-  addProps(props: Record<string, any>, ...args: any[]): void;
   readonly formId: string;
   readonly htmlName: string;
   readonly valid: boolean;
@@ -164,9 +155,7 @@ export type GroupInstance<
   clear(): Promise<void>;
   addField(
     schema: ElementsSchemas,
-    {
-      at
-    }?: {
+    options?: {
       at?: number;
     }
   ): Promise<Element>;

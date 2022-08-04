@@ -1,7 +1,7 @@
 import { ElementsSchemas } from '../core/elements/types';
-import { findIndex, get, isEqual, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
+import { findIndex, isEqual, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
 import { ValidationRuleSchema, Validator } from '../core/validations/types';
-import { isUndefined, def, isPromise, dumpProp } from '../utils';
+import { def, isPromise } from '../utils';
 import { formatter } from './formatter';
 
 export function cascadeRule<T extends ElementsSchemas>(fieldSchema: T, parentRules?: ValidationRuleSchema[]): T {
@@ -50,17 +50,6 @@ export function genHtmlName(Element: any, ancestors: any[] | null): string {
   return Element.type === 'set' ? `${htmlName}[]` : htmlName;
 }
 
-export function getProp(element: any, path: string, options: { up?: boolean } = {}) {
-  let prop = get(path, element.props);
-  const parent = element.parent;
-
-  if (options.up && isUndefined(prop) && parent) {
-    prop = getProp(parent, path, options);
-  }
-
-  return prop;
-}
-
 export function genProps(this: any, source: Record<string, any>, properties: any, ...args: any[]) {
   for (const key in properties) {
     const prop = properties[key];
@@ -69,19 +58,16 @@ export function genProps(this: any, source: Record<string, any>, properties: any
     if (newSource) {
       source[key] = genProps.call(this, newSource, prop, ...args);
     } else if (isFunction(prop)) {
-      this._d.asyncProps =
-        this._d.asyncProps ||
-        dumpProp(
-          {
-            values: {}
-          },
-          'asigned',
-          {}
-        );
+      const { _d } = this;
+
+      _d.asyncProps = _d.asyncProps || {
+        values: {},
+        asigned: {}
+      };
 
       def(source, key, {
         get: () => {
-          const asyncProps = this._d.asyncProps;
+          const asyncProps = _d.asyncProps;
           const asyncValue = asyncProps.values[key];
           let result;
 
@@ -194,17 +180,17 @@ export async function clearItems(this: any, items: any[] = []) {
 export async function validateItems(this: any, { cascade = true }: { cascade?: boolean } = {}, items: any[]) {
   this.emit('validate', this);
 
-  const _d = this._d;
-  const value = _d.tempValue || this.value;
+  const data = this._d;
+  const value = data.tempValue || this.value;
 
   if (cascade) {
     await Promise.all(items.map(async (group: any) => await group.validate()));
   }
 
-  await this.validation.validate(value, {}, this.props, this);
+  await this.validation.validate(value, this.props, this);
 
-  _d.value = this.valid ? value : null;
-  _d.tempValue = null;
+  data.r.value = this.valid ? value : null;
+  data.tempValue = null;
 
   this.emit('validated', this);
 
