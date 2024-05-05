@@ -8,8 +8,8 @@ export default class Objeto extends Evento {
     r: reactive({})
   };
 
-  protected readonly _config?: Record<string, any>;
   readonly plugs?: Plugs;
+
   format(format: string | Format | null | undefined, type: string, ...args: any[]) {
     return formatter(format, type, this, ...args);
   }

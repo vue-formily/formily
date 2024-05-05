@@ -155,7 +155,7 @@ export default class Group extends Element {
         () => resolve(field)
       );
 
-      (this._config as any).app.set(this, prop, field);
+      (this as any)._config.app.set(this, prop, field);
 
       this.fields.splice(isNumber(at) ? at : this.fields.length, 0, field);
     });
@@ -169,7 +169,7 @@ export default class Group extends Element {
     if (index !== -1) {
       [removed] = this.fields.splice(index, 1);
 
-      (this._config as any).app.delete(this, genFieldProp(removed));
+      (this as any)._config.app.delete(this, genFieldProp(removed));
 
       await updateGroupValue.call(this);
 
