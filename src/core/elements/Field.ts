@@ -6,7 +6,7 @@ import { toString, isUndefined, throwFormilyError } from '../../utils';
 import { normalizeSchema } from '../../helpers';
 import { FieldInstance } from './instanceTypes';
 
-type FieldData = ElementData & {
+export type FieldData = ElementData & {
   r: {
     formatted: string | null;
     error: string | null;
@@ -55,8 +55,6 @@ export default class Field extends Element {
   static create<F extends ReadonlySchema<FieldSchema>>(schema: FieldSchema, parent?: Element | null) {
     return new Field(schema as unknown as FieldSchema, parent) as unknown as FieldInstance<F>;
   }
-
-  protected _d!: FieldData;
 
   constructor(schema: FieldSchema, parent?: Element | null) {
     super(Field.accept(schema), parent);

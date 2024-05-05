@@ -16,7 +16,6 @@ export type RuleData = {
 };
 
 export default class Rule extends Objeto {
-  protected _d!: RuleData;
   message?: string | ((...args: any[]) => string);
   validator!: Validator;
 

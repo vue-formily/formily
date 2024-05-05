@@ -14,7 +14,7 @@ import Element, { ElementData } from './Element';
 import { isUndefined, throwFormilyError } from '../../utils';
 import { GroupInstance } from './instanceTypes';
 
-type GroupData = Omit<ElementData, 'schema'> & {
+export type GroupData = Omit<ElementData, 'schema'> & {
   r: {
     value: Record<string, any> | null;
   };
@@ -66,8 +66,6 @@ export default class Group extends Element {
   static create<F extends ReadonlySchema<GroupSchema>>(schema: F, parent?: Element | null) {
     return new Group(schema as unknown as GroupSchema, parent) as unknown as GroupInstance<F>;
   }
-
-  protected _d!: GroupData;
 
   fields: Element[] = [];
 

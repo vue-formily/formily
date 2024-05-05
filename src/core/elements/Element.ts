@@ -50,8 +50,6 @@ export default abstract class Element extends Objeto {
     _options = merge(_options, options);
   }
 
-  protected _d!: ElementData;
-
   props: Record<string, any> = {};
 
   constructor(schema: ElementSchema, parent?: Element | null) {

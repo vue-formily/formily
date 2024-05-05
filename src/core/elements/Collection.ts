@@ -29,7 +29,7 @@ export class CollectionItem extends Group {
   }
 }
 
-type CollectionData = Omit<ElementData, 'schema'> & {
+export type CollectionData = Omit<ElementData, 'schema'> & {
   r: {
     value: any[] | null;
   };
@@ -75,8 +75,6 @@ export default class Collection extends Element {
   static create<F extends ReadonlySchema<CollectionSchema>>(schema: CollectionSchema, parent?: Element | null) {
     return new Collection(schema as unknown as CollectionSchema, parent) as unknown as CollectionInstance<F>;
   }
-
-  protected _d!: CollectionData;
 
   groups: CollectionItem[] = [];
 
