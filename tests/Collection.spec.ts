@@ -1,6 +1,3 @@
-/* eslint-disable jest/expect-expect */
-/* eslint-disable jest/no-disabled-tests */
-/* eslint-disable jest/valid-title */
 import { createFormily, defineSchema } from '@/index';
 import { Collection, Field, Group } from '@/core/elements';
 import { required } from './helpers/rules';
@@ -531,7 +528,7 @@ describe('Collection', () => {
         v1 = value;
         c = coll;
       })
-      .on('groupchanged', async (value, old, gr) => {
+      .on('groupChanged', async (value, old, gr) => {
         g = gr;
       });
 

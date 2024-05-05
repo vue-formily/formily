@@ -53,7 +53,7 @@ export default class Field extends Element {
   }
 
   static create<F extends ReadonlySchema<FieldSchema>>(schema: FieldSchema, parent?: Element | null) {
-    return (new Field((schema as unknown) as FieldSchema, parent) as unknown) as FieldInstance<F>;
+    return new Field(schema as unknown as FieldSchema, parent) as unknown as FieldInstance<F>;
   }
 
   protected _d!: FieldData;

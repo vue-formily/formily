@@ -56,7 +56,7 @@ export type ElementInstance = {
   readonly type: string;
   readonly data: Record<string, any>;
   readonly props: Record<string, any>;
-  readonly shaked: boolean;
+  readonly shaken: boolean;
   readonly pending: boolean;
   readonly options: ElementOptions;
   readonly validation: ValidationInstance;

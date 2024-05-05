@@ -40,7 +40,7 @@ export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {
   const { formId } = schema;
 
   if (!length) {
-    throwFormilyError('No form elements have been registed yet');
+    throwFormilyError('No form elements have been registered yet');
   } else if (!element) {
     throwFormilyError('`formType` is not defined or supported', {
       formId
@@ -63,8 +63,8 @@ export default class Group extends Element {
     return normalizeSchema(schema, TYPE);
   }
 
-  static create<F extends ReadonlySchema<GroupSchema>>(schema: GroupSchema, parent?: Element | null) {
-    return (new Group((schema as unknown) as GroupSchema, parent) as unknown) as GroupInstance<F>;
+  static create<F extends ReadonlySchema<GroupSchema>>(schema: F, parent?: Element | null) {
+    return new Group(schema as unknown as GroupSchema, parent) as unknown as GroupInstance<F>;
   }
 
   protected _d!: GroupData;
@@ -146,13 +146,13 @@ export default class Group extends Element {
       const prop = genFieldProp(field);
 
       if (prop in this) {
-        throwFormilyError(`Dupplicated model: ${field.model}`);
+        throwFormilyError(`Duplicated model: ${field.model}`);
       }
 
       addFieldOrGroup.call(
         this,
         field,
-        (...args) => this.emit('fieldchanged', ...args),
+        (...args) => this.emit('fieldChanged', ...args),
         () => updateGroupValue.call(this),
         () => resolve(field)
       );
@@ -175,7 +175,7 @@ export default class Group extends Element {
 
       await updateGroupValue.call(this);
 
-      this.emit('fieldremoved', removed, this);
+      this.emit('fieldRemoved', removed, this);
     }
 
     return removed;

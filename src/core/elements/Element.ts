@@ -7,7 +7,7 @@ import { Validation } from '../validations';
 
 export interface ElementData {
   r: {
-    shaked: boolean;
+    shaken: boolean;
     invalidated: string | boolean;
     validation: Validation;
     data: Record<string, any>;
@@ -64,7 +64,7 @@ export default abstract class Element extends Objeto {
     const { props = {}, on = {}, options, rules = [] } = schema;
 
     reactive.data = {};
-    reactive.shaked = false;
+    reactive.shaken = false;
     reactive.invalidated = false;
     data.parent = parent || null;
     data.schema = schema;
@@ -82,8 +82,8 @@ export default abstract class Element extends Objeto {
     return this._d.parent;
   }
 
-  get shaked() {
-    return this._d.r.shaked;
+  get shaken() {
+    return this._d.r.shaken;
   }
 
   get pending() {
@@ -108,12 +108,12 @@ export default abstract class Element extends Objeto {
 
   get error() {
     const {
-      shaked,
+      shaken,
       invalidated,
       validation: { errors }
     } = this._d.r;
 
-    if (!shaked || this.valid) {
+    if (!shaken || this.valid) {
       return null;
     }
 
@@ -158,11 +158,11 @@ export default abstract class Element extends Objeto {
   }
 
   shake() {
-    this._d.r.shaked = true;
+    this._d.r.shaken = true;
   }
 
   cleanUp() {
-    this._d.r.shaked = false;
+    this._d.r.shaken = false;
     this._d.r.invalidated = false;
   }
 

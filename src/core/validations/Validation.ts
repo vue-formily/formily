@@ -6,7 +6,7 @@ import { isUndefined, throwFormilyError } from '../../utils';
 
 type InternalValidationRuleSchema = Validator | RuleSchema;
 
-export type ValiationData = {
+export type ValidationData = {
   context: Record<string, any> | null;
 };
 
@@ -60,7 +60,7 @@ export default class Validation extends Objeto {
     const name = rule.name;
 
     if (name in this) {
-      throwFormilyError(`Dupplicated rule: ${name}`);
+      throwFormilyError(`Duplicated rule: ${name}`);
     }
 
     const index = isNumber(at) ? at : this.rules.length;

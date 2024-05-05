@@ -12,7 +12,7 @@
     "sourceMap": true,
     "declaration": true,
     "baseUrl": ".",
-    "types": ["jest", "node"],
+    "types": ["node"],
     "paths": {
       "@/*": [
         "src/*"
@@ -29,6 +29,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
+    "tests/**/*.vue",
     "tests/**/*.ts",
     "tests/**/*.tsx",
     "tests/**/*.js"

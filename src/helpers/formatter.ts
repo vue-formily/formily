@@ -9,14 +9,14 @@ export function formatter(
   ...args: any[]
 ): string | null {
   const { plugs = {} } = context;
-  const FORMATER = `${type}Format`;
-  const _formatter = (plugs as any)[FORMATER];
-  const translater = (plugs as any).i18n;
+  const FORMATTER = `${type}Format`;
+  const _formatter = (plugs as any)[FORMATTER];
+  const translator = (plugs as any).i18n;
   let result: string | null = null;
   const formatting = isFunction(format) ? format.call(context, context, ...args) : format;
 
   if (isString(formatting)) {
-    result = translater ? translater.translate(formatting, context, ...args) : formatting;
+    result = translator ? translator.translate(formatting, context, ...args) : formatting;
 
     if (_formatter) {
       result = _formatter.format(result, [context], ...args);

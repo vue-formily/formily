@@ -9,7 +9,7 @@ const formily = createFormily();
 [Field, Collection, Group].forEach(F => formily.register(F));
 
 function createGroup<F extends ReadonlySchema<GroupSchema>>(schema: F) {
-  return (new Group((schema as unknown) as GroupSchema) as unknown) as GroupInstance<F>;
+  return new Group(schema as unknown as GroupSchema) as unknown as GroupInstance<F>;
 }
 
 describe('Group', () => {
@@ -377,39 +377,39 @@ describe('Group', () => {
   });
 
   it('Can clear', async () => {
-    const group = createGroup(
-      defineSchema({
-        formId: 'group_test',
-        formType: 'group',
-        rules: [
-          {
-            ...required,
-            message: 'test'
-          }
-        ],
-        fields: [
-          {
-            formId: 'a',
-            formType: 'field',
-            rules: [
-              {
-                ...required,
-                message: 'abc'
-              }
-            ]
-          },
-          {
-            formId: 'b',
-            formType: 'field',
-            fields: [
-              {
-                formId: 'c'
-              }
-            ]
-          }
-        ]
-      })
-    );
+    const s = defineSchema({
+      formId: 'group_test',
+      formType: 'group',
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      fields: [
+        {
+          formId: 'a',
+          formType: 'field',
+          rules: [
+            {
+              ...required,
+              message: 'abc'
+            }
+          ]
+        },
+        {
+          formId: 'b',
+          formType: 'field',
+          fields: [
+            {
+              formId: 'c'
+            }
+          ]
+        }
+      ]
+    });
+
+    const group = createGroup(s);
 
     await group.validate();
 
@@ -550,7 +550,7 @@ describe('Group', () => {
         expect(value).toEqual({ a: 'a' });
         expect(g.value).toEqual({ a: 'a' });
       })
-      .on('fieldchanged', async (value, old, f) => {
+      .on('fieldChanged', async (value, old, f) => {
         expect(f.value).toEqual('a');
       });
   });

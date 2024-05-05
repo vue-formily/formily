@@ -1,10 +1,12 @@
-import { h } from 'vue';
+import { vi } from 'vitest';
+import { h, createApp } from 'vue';
 import { mount } from '@vue/test-utils';
 import stringFormat from '@vue-formily/string-format';
 import { createFormily, defineSchema, useFormily } from '@/index';
 import { Form } from '@/core/elements';
 import flushPromises from 'flush-promises';
 import { required } from './helpers/rules';
+import ScriptSetup from './helpers/ScriptSetup.vue';
 import { FormInstance } from '@/core/elements/instanceTypes';
 
 describe('VueFormily', () => {
@@ -277,7 +279,7 @@ describe('VueFormily', () => {
       })
     );
 
-    const mockFn = jest.fn(() => {
+    const mockFn = vi.fn(() => {
       expect(form.$a.formatted).toBe('format 2021');
     });
 
@@ -325,6 +327,27 @@ describe('VueFormily', () => {
         }
       }
     );
+  });
+
+  test('Script Setup', async () => {
+    const app = createApp({
+      setup() {
+        const formily = useFormily();
+
+        expect(formily).toBeDefined();
+      }
+    });
+
+    app.use(createFormily());
+    app.mount(document.createElement('div'));
+
+    const wrapper = mount(ScriptSetup, {
+      global: {
+        plugins: [createFormily()]
+      }
+    });
+
+    expect(wrapper.vm.$formily).toBeDefined();
   });
 
   test('Reactivity', async () => {
@@ -424,7 +447,7 @@ describe('VueFormily', () => {
     const wrapper = mount(
       {
         name: 'test',
-        created() {
+        created(this: any) {
           this.$formily.addForm(schema);
         },
         render() {
@@ -463,7 +486,7 @@ describe('VueFormily', () => {
 
     expect(wrapper.find('#test').element.innerHTML).toBe('hi, 0 (1) 0 (2) rule (7) test (8) test depended');
 
-    const test = (wrapper.vm.forms.test as unknown) as TestForm;
+    const test = wrapper.vm.forms.test as unknown as TestForm;
 
     test.$field.raw = 1;
     test.$group.$field.raw = 1;

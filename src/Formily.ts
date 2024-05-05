@@ -3,23 +3,29 @@ import { ElementOptions, FormSchema, ReadonlySchema } from './core/elements/type
 import { ValidationRuleSchema } from './core/validations/types';
 import Form from './core/elements/Form';
 import { FormInstance } from './core/elements/instanceTypes';
+import Evento from './core/Evento';
+import { reactive } from 'vue';
+
+export type VueFormilyOptions = ElementOptions & {
+  rules?: ValidationRuleSchema[];
+  alias: string;
+};
+
+export type VueFormilyOptionsParam = ElementOptions & Partial<VueFormilyOptions>;
 
 const defaultOptions: VueFormilyOptions = {
   alias: 'forms'
 };
 
-export type VueFormilyOptions = ElementOptions & {
-  rules?: ValidationRuleSchema[];
-  alias?: string;
-};
-
-export default class Formily {
+export default class Formily extends Evento {
   options: VueFormilyOptions;
-  $root: any;
 
-  constructor(options: VueFormilyOptions = {}, $root: any) {
+  forms: Record<string, FormInstance> = reactive({});
+
+  constructor(options: VueFormilyOptionsParam = {}) {
+    super();
+
     this.options = merge({}, defaultOptions, options) as VueFormilyOptions;
-    this.$root = $root;
   }
 
   addForm<F extends ReadonlySchema<FormSchema>>(schema: F) {
@@ -28,18 +34,24 @@ export default class Formily {
 
     (schema as any).rules = merge([], options.rules, rules);
 
-    const form = (new Form((schema as unknown) as FormSchema) as unknown) as FormInstance<F>;
+    const form = new Form(schema as unknown as FormSchema) as unknown as FormInstance<F>;
 
-    this.$root[options.alias as string][form.formId] = form;
+    this.forms[form.formId] = form as FormInstance;
+
+    this.emit('addForm', form);
 
     return form;
   }
 
   removeForm(formId: string) {
-    delete this.$root[this.options.alias as string][formId];
+    const removed = this.forms[formId];
+
+    delete this.forms[formId];
+
+    this.emit('removeForm', removed);
   }
 
   getForm<F>(formId: string): F {
-    return this.$root[this.options.alias as string][formId];
+    return this.forms[formId] as F;
   }
 }

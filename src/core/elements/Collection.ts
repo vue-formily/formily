@@ -38,7 +38,7 @@ type CollectionData = Omit<ElementData, 'schema'> & {
   tempValue?: any;
 };
 
-async function updateColectionValue(this: Collection) {
+async function updateCollectionValue(this: Collection) {
   await updateValue.call(this, this.groups);
 }
 
@@ -73,7 +73,7 @@ export default class Collection extends Element {
   }
 
   static create<F extends ReadonlySchema<CollectionSchema>>(schema: CollectionSchema, parent?: Element | null) {
-    return (new Collection((schema as unknown) as CollectionSchema, parent) as unknown) as CollectionInstance<F>;
+    return new Collection(schema as unknown as CollectionSchema, parent) as unknown as CollectionInstance<F>;
   }
 
   protected _d!: CollectionData;
@@ -182,8 +182,8 @@ export default class Collection extends Element {
       addFieldOrGroup.call(
         this,
         groupItem,
-        (...args) => this.emit('groupchanged', ...args),
-        () => updateColectionValue.call(this),
+        (...args) => this.emit('groupChanged', ...args),
+        () => updateCollectionValue.call(this),
         () => resolve(groupItem)
       );
     });
@@ -198,9 +198,9 @@ export default class Collection extends Element {
     if (removed) {
       (this.groups as CollectionItem[]).splice(index, 1);
 
-      await updateColectionValue.call(this);
+      await updateCollectionValue.call(this);
 
-      this.emit('groupremoved', removed, this);
+      this.emit('groupRemoved', removed, this);
     }
 
     return removed as CollectionItemInstance<T> | null;

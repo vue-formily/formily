@@ -4,17 +4,10 @@ module.exports = {
     browser: true,
     commonjs: true,
     es6: true,
-    node: true,
-    'jest/globals': true
+    node: true
   },
-  extends: [
-    'standard',
-    'eslint:recommended',
-    'plugin:jest/recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended'
-  ],
-  plugins: ['jest', 'prettier', '@typescript-eslint'],
+  extends: ['standard', 'eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
+  plugins: ['prettier', '@typescript-eslint'],
   parserOptions: {
     parser: '@typescript-eslint/parser',
     ecmaVersion: 2020
@@ -27,13 +20,5 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/no-empty-function': 'off'
-  },
-  overrides: [
-    {
-      files: ['**/__tests__/*.{j,t}s?(x)', '**/tests/unit/**/*.spec.{j,t}s?(x)'],
-      env: {
-        jest: true
-      }
-    }
-  ]
+  }
 };

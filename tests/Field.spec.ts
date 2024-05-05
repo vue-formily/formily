@@ -119,7 +119,7 @@ describe('Field', () => {
     expect((f.validation as any).numeric.error).toBe('test message');
   });
 
-  it('Can be shaked', async () => {
+  it('Can be shaken', async () => {
     const f = new Field({
       formId: 'field_name',
       formType: 'field',

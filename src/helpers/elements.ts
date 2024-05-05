@@ -62,7 +62,7 @@ export function genProps(this: any, source: Record<string, any>, properties: any
 
       _d.asyncProps = _d.asyncProps || {
         values: {},
-        asigned: {}
+        assigned: {}
       };
 
       def(source, key, {
@@ -71,10 +71,10 @@ export function genProps(this: any, source: Record<string, any>, properties: any
           const asyncValue = asyncProps.values[key];
           let result;
 
-          if (asyncValue && !asyncProps.asigned[key]) {
+          if (asyncValue && !asyncProps.assigned[key]) {
             result = asyncValue;
 
-            delete asyncProps.asigned[key];
+            delete asyncProps.assigned[key];
           } else {
             result = prop.call(this, this, ...args);
           }
@@ -83,7 +83,7 @@ export function genProps(this: any, source: Record<string, any>, properties: any
             result.then((value: any) => {
               // Trigger Vue re-render
               asyncProps.values[key] = value;
-              asyncProps.asigned[key] = false;
+              asyncProps.assigned[key] = false;
             });
           }
 

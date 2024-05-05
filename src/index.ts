@@ -2,7 +2,7 @@ import { App, ComponentInternalInstance, getCurrentInstance } from 'vue';
 import { Field, Group, Collection, Form } from './core/elements';
 import { VueFormilyConfig, VueFormilyPlugin } from './types';
 import { FormInstance } from './core/elements/instanceTypes';
-import Formily, { VueFormilyOptions } from './Formily';
+import Formily, { VueFormilyOptions, VueFormilyOptionsParam } from './Formily';
 import Objeto from './core/Objeto';
 import Evento from './core/Evento';
 import { def, logMessage, throwFormilyError } from './utils';
@@ -45,26 +45,24 @@ function createFormily() {
     }
   });
 
+  let formily: Formily;
+
   const vueFormily = {
-    install(app: App, options: VueFormilyOptions = {}) {
+    install(app: App, options: VueFormilyOptionsParam = {}) {
       // initialize default form elements
       [Field, Collection, Group].forEach(F => this.register(F, options));
 
+      // app.provide('vueFormily', vueFormily);
+      app.config.globalProperties.$formily = formily = new Formily(options);
+
       app.mixin({
         beforeCreate(this: any) {
-          this.$formily = new Formily(options, this.$root);
+          this.$formily = formily;
         },
-        data(this: any) {
-          const alias = this.$formily.options.alias;
-          let forms = this.$root[alias];
-
-          if (!forms) {
-            forms = this.$root[alias] = {};
+        computed: {
+          [formily.options.alias]() {
+            return this.$formily.forms;
           }
-
-          return {
-            [alias]: forms
-          };
         }
       });
     },
@@ -85,20 +83,18 @@ function createFormily() {
   return vueFormily;
 }
 
-export function useFormily(options: VueFormilyOptions = {}) {
+export function useFormily(options?: VueFormilyOptionsParam) {
   const instance: ComponentInternalInstance | null = getCurrentInstance();
 
   if (instance == null) {
     throwFormilyError(logMessage('Must be called at the top of a `setup` function'));
   }
 
-  const $root = instance.proxy && instance.proxy.$root;
-
-  if (!$root) {
-    throwFormilyError(logMessage('Unexpected error'));
+  if (options) {
+    return new Formily(options);
   }
 
-  return options ? $root.$formily : new Formily(options, $root);
+  return instance.appContext.config.globalProperties.$formily;
 }
 
 const VueFormily = {
