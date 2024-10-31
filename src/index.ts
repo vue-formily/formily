@@ -7,8 +7,8 @@ import Objeto from './core/Objeto';
 import Evento from './core/Evento';
 import { def, logMessage, throwFormilyError } from './utils';
 
-declare module '@vue/runtime-core' {
-  export interface ComponentCustomProperties {
+declare module 'vue' {
+  interface ComponentCustomProperties {
     $formily: Formily;
     forms: Record<string, FormInstance>;
   }
