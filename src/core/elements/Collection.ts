@@ -1,7 +1,7 @@
 import { findIndex, isPlainObject } from '@vue-formily/util';
-import { CollectionSchema, CollectionItemSchema, ElementsSchemas, GroupSchema, ReadonlySchema } from './types';
-import Element, { ElementData } from './Element';
-import Group from './Group';
+import { CollectionSchema, CollectionItemSchema, ElementsSchemas, GroupSchema, ReadonlySchema } from '../../types';
+import { Element } from './Element';
+import { Group } from './Group';
 import {
   cascadeRule,
   normalizeSchema,
@@ -12,7 +12,7 @@ import {
   validateItems
 } from '../../helpers';
 import { isUndefined, logMessage, throwFormilyError } from '../../utils';
-import { CollectionInstance, CollectionItemInstance } from './instanceTypes';
+import { CollectionInstance, CollectionItemInstance } from '../../types/instances';
 
 const FORM_TYPE = 'collection';
 const TYPE = 'set';
@@ -28,15 +28,6 @@ export class CollectionItem extends Group {
     return `${(this.parent as Collection).formId}${this.index}`;
   }
 }
-
-export type CollectionData = Omit<ElementData, 'schema'> & {
-  r: {
-    value: any[] | null;
-  };
-  schema: CollectionSchema;
-  dummy: CollectionItem;
-  tempValue?: any;
-};
 
 async function updateCollectionValue(this: Collection) {
   await updateValue.call(this, this.groups);
@@ -59,7 +50,7 @@ function genItem<T extends Readonly<Record<string, any>> = Readonly<Record<strin
   ) as CollectionItemInstance<T>;
 }
 
-export default class Collection extends Element {
+export class Collection extends Element {
   static FORM_TYPE = FORM_TYPE;
 
   static accept(schema: any): CollectionSchema {

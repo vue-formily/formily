@@ -1,16 +1,10 @@
 import { findIndex, isNumber } from '@vue-formily/util';
-import { RuleSchema, Validator } from './types';
-import Rule from './Rule';
-import Objeto from '../Objeto';
+import { InternalValidationRuleSchema, RuleSchema } from '../../types';
+import { Rule } from './Rule';
+import { Objeto } from '../Objeto';
 import { isUndefined, throwFormilyError } from '../../utils';
 
-type InternalValidationRuleSchema = Validator | RuleSchema;
-
-export type ValidationData = {
-  context: Record<string, any> | null;
-};
-
-export default class Validation extends Objeto {
+export class Validation extends Objeto {
   rules: Rule[] = [];
 
   constructor(rules: InternalValidationRuleSchema[] = [], context: Record<string, any> | null = null) {

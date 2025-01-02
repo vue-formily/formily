@@ -2,7 +2,7 @@ import { createFormily, defineSchema, GroupSchema, ReadonlySchema, Rule } from '
 import { Collection, Field, Group } from '@/core/elements';
 import flushPromises from 'flush-promises';
 import { required } from './helpers/rules';
-import { GroupInstance } from '@/core/elements/instanceTypes';
+import { GroupInstance } from '@/types/instances';
 
 const formily = createFormily();
 
@@ -545,12 +545,12 @@ describe('Group', () => {
     });
 
     group
-      .on('changed', async (value, old, g) => {
+      .on('changed', async (value: any, old: any, g: any) => {
         expect(old).toEqual(null);
         expect(value).toEqual({ a: 'a' });
         expect(g.value).toEqual({ a: 'a' });
       })
-      .on('fieldChanged', async (value, old, f) => {
+      .on('fieldChanged', async (value: any, old: any, f: any) => {
         expect(f.value).toEqual('a');
       });
   });
@@ -601,7 +601,7 @@ describe('Group', () => {
       ]
     });
 
-    group.on('changed', async (value, old, g) => {
+    group.on('changed', async (value: any, old: any) => {
       expect(old).toEqual(null);
       expect(value).toEqual({
         a: ''

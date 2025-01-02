@@ -1,5 +1,5 @@
 import { findIndex, isNumber, isPlainObject } from '@vue-formily/util';
-import { GroupSchema, ElementsSchemas, ReadonlySchema } from './types';
+import { GroupSchema, ElementsSchemas, ReadonlySchema } from '../../types';
 
 import {
   addFieldOrGroup,
@@ -10,17 +10,9 @@ import {
   updateValue,
   validateItems
 } from '../../helpers';
-import Element, { ElementData } from './Element';
+import { Element } from './Element';
 import { isUndefined, throwFormilyError } from '../../utils';
-import { GroupInstance } from './instanceTypes';
-
-export type GroupData = Omit<ElementData, 'schema'> & {
-  r: {
-    value: Record<string, any> | null;
-  };
-  tempValue?: any;
-  schema: GroupSchema;
-};
+import { GroupInstance } from '../../types/instances';
 
 const FORM_TYPE = 'group';
 const TYPE = 'enum';
@@ -50,7 +42,7 @@ export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {
   return element.create(schema, parent, ...args);
 }
 
-export default class Group extends Element {
+export class Group extends Element {
   static FORM_TYPE = FORM_TYPE;
 
   static accept(schema: any): GroupSchema {

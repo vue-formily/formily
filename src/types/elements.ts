@@ -1,6 +1,48 @@
-import { EventHandler } from '../Evento';
-import { ValidationRuleSchema } from '../validations/types';
-import { Builtin } from '../../utils-types';
+import { EventHandler } from '../core/Evento';
+import { ValidationRuleSchema } from './validation';
+import { Builtin } from './generic';
+import { Validation } from '../core/validations';
+import { CollectionItem } from '../core/elements';
+
+export interface ElementData {
+  r: {
+    shaken: boolean;
+    invalidated: string | boolean;
+    validation: Validation;
+    data: Record<string, any>;
+  };
+  ancestors: any[] | null;
+  schema: any;
+  options: ElementOptions;
+  parent: Element | null;
+}
+
+export type FieldData = ElementData & {
+  r: {
+    formatted: string | null;
+    error: string | null;
+    raw: string;
+  };
+  checkedValue: any;
+  default: any;
+};
+
+export type CollectionData = Omit<ElementData, 'schema'> & {
+  r: {
+    value: any[] | null;
+  };
+  schema: CollectionSchema;
+  dummy: CollectionItem;
+  tempValue?: any;
+};
+
+export type GroupData = Omit<ElementData, 'schema'> & {
+  r: {
+    value: Record<string, any> | null;
+  };
+  tempValue?: any;
+  schema: GroupSchema;
+};
 
 export type ElementOptions = {
   silent?: boolean;

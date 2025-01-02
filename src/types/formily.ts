@@ -1,4 +1,4 @@
-import { Plugs } from './core/plugs';
+import { Plugs } from '../core/plugs';
 
 export type VueFormilyConfig = {
   app: any;

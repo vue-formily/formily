@@ -1,20 +1,10 @@
 import { isNumeric } from '@vue-formily/util';
-import { FieldSchema, FieldType, FieldValue, ReadonlySchema } from './types';
+import { FieldSchema, FieldType, FieldValue, ReadonlySchema } from '../../types';
 
-import Element, { ElementData } from './Element';
+import { Element } from './Element';
 import { toString, isUndefined, throwFormilyError } from '../../utils';
 import { normalizeSchema } from '../../helpers';
-import { FieldInstance } from './instanceTypes';
-
-export type FieldData = ElementData & {
-  r: {
-    formatted: string | null;
-    error: string | null;
-    raw: string;
-  };
-  checkedValue: any;
-  default: any;
-};
+import { FieldInstance } from '../../types/instances';
 
 const FORM_TYPE = 'field';
 const casts: Record<string, (value: any, ...args: any[]) => FieldValue> = {
@@ -34,7 +24,7 @@ const casts: Record<string, (value: any, ...args: any[]) => FieldValue> = {
   }
 };
 
-export default class Field extends Element {
+export class Field extends Element {
   static FORM_TYPE = FORM_TYPE;
   static FIELD_TYPE_STRING = 'string';
   static FIELD_TYPE_NUMBER = 'number';

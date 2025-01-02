@@ -12,7 +12,7 @@
     "sourceMap": true,
     "declaration": true,
     "baseUrl": ".",
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "paths": {
       "@/*": [
         "src/*"

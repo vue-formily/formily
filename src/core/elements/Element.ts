@@ -1,22 +1,9 @@
 import { isString, merge } from '@vue-formily/util';
-import { ElementOptions, ElementSchema } from './types';
+import { ElementOptions, ElementSchema } from '../../types';
 import { genHtmlName, genProps } from '../../helpers';
 import { throwFormilyError } from '../../utils';
-import Objeto from '../Objeto';
+import { Objeto } from '../Objeto';
 import { Validation } from '../validations';
-
-export interface ElementData {
-  r: {
-    shaken: boolean;
-    invalidated: string | boolean;
-    validation: Validation;
-    data: Record<string, any>;
-  };
-  ancestors: any[] | null;
-  schema: any;
-  options: ElementOptions;
-  parent: Element | null;
-}
 
 function genElementAncestors(elem: Element): any[] | null {
   const path = [];
@@ -35,7 +22,7 @@ let _options = {
   silent: true
 } as ElementOptions;
 
-export default abstract class Element extends Objeto {
+export class Element extends Objeto {
   static accept(schema: any) {
     ['formId'].forEach(prop => {
       if (!prop) {

@@ -6,10 +6,10 @@ import {
   FieldValue,
   GroupSchema,
   CollectionSchema
-} from './types';
-import { UnionToIntersection } from '../../utils-types';
-import Objeto from '../Objeto';
-import { RuleSchema, Validator } from '../validations/types';
+} from './elements';
+import { UnionToIntersection } from './generic';
+import Objeto from '../core/Objeto';
+import { RuleSchema, Validator } from '.';
 
 export type RuleInstance = {
   readonly name: string | number;

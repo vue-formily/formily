@@ -1,21 +1,10 @@
 import { isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
-import { RuleSchema, Validator } from './types';
+import { RuleSchema, Validator } from '../../types';
 
-import Objeto from '../Objeto';
-import { ValidationInstance } from '../elements/instanceTypes';
+import { Objeto } from '../Objeto';
+import { ValidationInstance } from '../../types/instances';
 
-export type RuleData = {
-  r: {
-    error: string | null;
-    valid: boolean;
-    pending: boolean;
-  };
-  schema: Validator | RuleSchema;
-  name: string | number;
-  container: ValidationInstance | null;
-};
-
-export default class Rule extends Objeto {
+export class Rule extends Objeto {
   message?: string | ((...args: any[]) => string);
   validator!: Validator;
 

@@ -1,6 +1,6 @@
-import { ElementsSchemas } from '../core/elements/types';
+import { ElementsSchemas } from '../types';
 import { findIndex, isEqual, isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
-import { ValidationRuleSchema, Validator } from '../core/validations/types';
+import { ValidationRuleSchema, Validator } from '../types/validation';
 import { def, isPromise } from '../utils';
 import { formatter } from './formatter';
 

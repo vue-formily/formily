@@ -1,4 +1,2 @@
-import Validation from './Validation';
-import Rule from './Rule';
-
-export { Validation, Rule };
+export * from './Validation';
+export * from './Rule';

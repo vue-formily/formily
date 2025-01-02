@@ -1,6 +1,6 @@
 import { createFormily, defineSchema } from '@/index';
 import { Form, Field, Collection, Group } from '@/core/elements';
-import { CollectionItemInstance, FormInstance } from '@/core/elements/instanceTypes';
+import { CollectionItemInstance, FormInstance } from '@/types/instances';
 
 const formily = createFormily();
 

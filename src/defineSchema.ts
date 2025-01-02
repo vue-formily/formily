@@ -3,8 +3,8 @@
 // options (provided as the argument). The returned value has artificial types
 // for TSX / manual render function / IDE support.
 
-import { ElementsSchemas, ReadonlySchema } from './core/elements/types';
-import { ValidationRuleSchema } from './core/validations/types';
+import { ElementsSchemas, ReadonlySchema } from './types';
+import { ValidationRuleSchema } from './types/validation';
 
 export function defineSchema<V extends string, F extends ReadonlySchema<ElementsSchemas<V> | ValidationRuleSchema<V>>>(
   schema: F

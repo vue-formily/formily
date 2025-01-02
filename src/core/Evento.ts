@@ -47,7 +47,7 @@ function parseName(name: string) {
   return name.split(':');
 }
 
-export default class Evento {
+export class Evento {
   events!: Record<string, EventElement>;
 
   constructor() {

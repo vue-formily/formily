@@ -1,10 +1,10 @@
 import { App, ComponentInternalInstance, getCurrentInstance } from 'vue';
 import { Field, Group, Collection, Form } from './core/elements';
 import { VueFormilyConfig, VueFormilyPlugin } from './types';
-import { FormInstance } from './core/elements/instanceTypes';
+import { FormInstance } from './types/instances';
 import Formily, { VueFormilyOptions, VueFormilyOptionsParam } from './Formily';
-import Objeto from './core/Objeto';
-import Evento from './core/Evento';
+import { Objeto } from './core/Objeto';
+import { Evento } from './core/Evento';
 import { def, logMessage, throwFormilyError } from './utils';
 
 declare module 'vue' {
@@ -128,8 +128,8 @@ export type {
   FormInstance,
   CollectionInstance,
   CollectionItemInstance
-} from './core/elements/instanceTypes';
-export type { Validator, RuleSchema, ValidationRuleSchema } from './core/validations/types';
+} from './types/instances';
+export type { Validator, RuleSchema, ValidationRuleSchema } from './types/validation';
 export type { EventHandler, EventOptions, EventElement } from './core/Evento';
 
 export * from './core/validations';

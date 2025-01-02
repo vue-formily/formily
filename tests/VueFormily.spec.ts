@@ -7,7 +7,7 @@ import { Form } from '@/core/elements';
 import flushPromises from 'flush-promises';
 import { required } from './helpers/rules';
 import ScriptSetup from './helpers/ScriptSetup.vue';
-import { FormInstance } from '@/core/elements/instanceTypes';
+import { FormInstance } from '@/types/instances';
 
 describe('VueFormily', () => {
   it('Should install successfully', () => {

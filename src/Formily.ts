@@ -1,9 +1,9 @@
 import { merge } from '@vue-formily/util';
-import { ElementOptions, FormSchema, ReadonlySchema } from './core/elements/types';
-import { ValidationRuleSchema } from './core/validations/types';
-import Form from './core/elements/Form';
-import { FormInstance } from './core/elements/instanceTypes';
-import Evento from './core/Evento';
+import { ElementOptions, FormSchema, ReadonlySchema } from './types';
+import { ValidationRuleSchema } from './types/validation';
+import { Form } from './core/elements/Form';
+import { FormInstance } from './types/instances';
+import { Evento } from './core/Evento';
 import { reactive } from 'vue';
 
 export type VueFormilyOptions = ElementOptions & {

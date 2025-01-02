@@ -1,3 +1,3 @@
-import Group from './Group';
+import { Group } from './Group';
 
-export default class Form extends Group {}
+export class Form extends Group {}
