@@ -5,10 +5,19 @@
   "author": "An Ha",
   "license": "MIT",
   "type": "module",
-  "module": "dist/formily.esm.js",
+  "main": "./dist/formily.js",
+  "module": "./dist/formily.esm.js",
   "unpkg": "dist/formily.js",
-  "main": "dist/formily.js",
-  "types": "dist/formily.d.ts",
+  "types": "./dist/formily.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/formily.d.ts",
+      "import": "./dist/formily.esm.js",
+      "require": "./dist/formily.js",
+      "default": "./dist/formily.js"
+    },
+    "./package.json": "./package.json"
+  },
   "homepage": "https://vue-formily.netlify.app",
   "repository": "https://github.com/vue-formily/formily",
   "sideEffects": false,
