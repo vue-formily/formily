@@ -1,13 +1,14 @@
-import { Plugs } from '../core/plugs';
+import { SharedConfig } from './config';
+import { GroupConfig, GroupScopes } from './elements';
+import { Plug } from './plug';
+import { ReactorFactory } from './reactor';
 
 export type VueFormilyConfig = {
-  app: any;
-  plugs: Plugs;
-  elements: any[];
-};
-
-export interface VueFormilyPlugin {
-  install(config: VueFormilyConfig, ...args: any[]): any;
-}
-
-export type Localizer = (value: string, props?: Record<string, any>, data?: Record<string, any>) => string;
+  elements?: GroupConfig['elements'];
+  reactor?: ReactorFactory;
+  plugs?: Plug[];
+  shared?: SharedConfig;
+  alias?: string;
+} & GroupScopes & {
+    group?: GroupConfig;
+  };

@@ -1,26 +1,53 @@
-import { findIndex, isNumber } from '@vue-formily/util';
-import { InternalValidationRuleSchema, RuleSchema } from '../../types';
-import { Rule } from './Rule';
-import { Objeto } from '../Objeto';
-import { isUndefined, throwFormilyError } from '../../utils';
+import { isString } from '@vue-formily/util';
 
-export class Validation extends Objeto {
+import {
+  ConfigParam,
+  ValidationConfig,
+  ValidationAddRuleOptions,
+  ValidationInstance,
+  ValidationRuleSchema,
+  ValidationSchema,
+  ValidationInternalData,
+  ValidationReactiveData
+} from '@/types';
+
+import { Rule } from './Rule';
+import { Schemy } from '@/core/Schemy';
+import { VALIDATION_HOOKS } from '@/hooks/validation';
+import { addItem, removeItem } from '@/utils';
+import { mergeConfigs } from '@/helpers';
+
+export class Validation<
+  S extends ValidationSchema = ValidationSchema,
+  C extends ValidationConfig = ValidationConfig,
+  I extends ValidationInternalData<S, C> = ValidationInternalData<S, C>,
+  R extends ValidationReactiveData = ValidationReactiveData
+> extends Schemy<S, C, I, R> {
   rules: Rule[] = [];
 
-  constructor(rules: InternalValidationRuleSchema[] = [], context: Record<string, any> | null = null) {
-    super();
+  constructor(schema: S = {} as S, config?: ConfigParam<ValidationConfig>) {
+    super(schema, config);
 
-    this._d.context = context;
+    const { rules = [] } = schema;
 
     rules.forEach(rule => this.addRule(rule));
   }
 
-  get context(): Record<string, any> | null {
-    return this._d.context;
+  get defaultConfig(): ValidationConfig {
+    return mergeConfigs([
+      super.defaultConfig,
+      {
+        hooks: VALIDATION_HOOKS
+      }
+    ]);
+  }
+
+  get context() {
+    return (this.config as ValidationConfig).context;
   }
 
   get pending() {
-    return !this.rules.some(rule => !rule.pending);
+    return this.rules.length > 0 && this.rules.some(rule => rule.pending);
   }
 
   get valid() {
@@ -28,73 +55,58 @@ export class Validation extends Objeto {
   }
 
   get errors() {
-    if (this.valid) {
-      return null;
-    }
-
-    const errors = this.rules.map(rule => rule.error).filter(error => error);
-
-    return errors.length ? errors : null;
+    return this.rules.map(rule => rule.error).filter(error => error);
   }
 
-  getSchema() {
-    const filtered = this.rules
-      .map(rule => {
-        const schema = rule.getSchema();
-
-        return (schema as any).__cascaded ? ((schema as any).__origin as RuleSchema) : schema;
-      })
-      .filter(schema => !isUndefined(schema));
-
-    return filtered.length ? filtered : null;
-  }
-
-  addRule(ruleOrSchema: Rule | InternalValidationRuleSchema, { at }: { at?: number } = {}): Rule {
-    const rule = new Rule(ruleOrSchema, this);
+  addRule(schema: ValidationRuleSchema, options: ValidationAddRuleOptions = {}): Rule {
+    const { reactor, plugs, rule: ruleConfig } = this.config;
+    const rule = new Rule(schema, [
+      {
+        reactor,
+        plugs,
+        context: this as unknown as ValidationInstance
+      },
+      ruleConfig
+    ]);
     const name = rule.name;
 
     if (name in this) {
-      throwFormilyError(`Duplicated rule: ${name}`);
+      this.throw(__DEV__ ? `Duplicated rule: ${name}` : '3');
     }
 
-    const index = isNumber(at) ? at : this.rules.length;
-
-    this.rules.splice(index, 0, rule);
+    addItem(this.rules, rule, options);
 
     (this as any)[name] = rule;
+
+    this.emit('ruleAdded', { rule });
 
     return rule;
   }
 
-  removeRule(remove: Rule | string) {
-    const index = findIndex(this.rules, ({ name }) => {
-      const n = remove instanceof Rule ? remove.name : remove;
+  removeRule(remove: Rule | string | number) {
+    const target = isString(remove) ? this[remove as keyof this] : remove instanceof Rule ? remove : this.rules[remove];
+    const rule = removeItem(this.rules, target, { key: 'name' });
 
-      return name === n;
-    });
+    if (rule) {
+      delete this[rule.name as keyof Validation];
 
-    const [removed] = index !== -1 ? this.rules.splice(index, 1) : [];
+      this.emit('ruleRemoved', { rule });
+    }
 
-    delete this[removed.name as keyof Validation];
-
-    this.emit('add', this, removed);
-
-    return removed;
+    return rule;
   }
 
   reset() {
     this.rules.forEach(rule => rule.reset());
   }
 
-  async validate(value: any, ...args: any[]): Promise<Validation> {
-    this.emit('validate', this);
+  async validate(value: any, ...args: any[]): Promise<boolean> {
+    this.emit('validate', { value });
 
-    if (this.rules) {
-      await Promise.all(this.rules.map(async rule => await rule.validate(value, ...args)));
-    }
+    await Promise.all(this.rules.map(async rule => await rule.validate(value, ...args)));
 
-    this.emit('validated', this);
+    this.emit('validated', { value });
 
-    return this;
+    return this.valid;
   }
 }

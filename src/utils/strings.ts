@@ -1,16 +1,15 @@
-export function logMessage(message?: string, infos?: Record<string, string>) {
-  const infosText = infos
-    ? `(${Object.keys(infos)
-        .map((name: string) => `${name}: "${infos[name]}"`)
+export function createFormilyError(message?: string, meta?: Record<string, string>) {
+  const metaMessage = meta
+    ? `(${Object.keys(meta)
+        .map((name: string) => `${name}: "${meta[name]}"`)
         .join(', ')}) `
     : '';
-  return `[vue-formily] ${infosText}${message}`;
+
+  return new Error(`[vue-formily] ${metaMessage}${message}`);
 }
 
-export function toString(value: any) {
-  return '' + value;
-}
+let _uid = 0;
 
-export function throwFormilyError(...args: any[]): never {
-  throw new Error(logMessage(...args));
+export function uid(prefix = 'u'): string {
+  return `${prefix}${(++_uid).toString(36)}`;
 }

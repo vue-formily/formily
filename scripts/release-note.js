@@ -1,7 +1,9 @@
+import fs from 'node:fs';
+import cc from 'conventional-changelog';
+
 const version = process.argv[2] || process.env.VERSION;
-const cc = require('conventional-changelog');
 const file = `./RELEASE_NOTE${version ? `_${version}` : ``}.md`;
-const fileStream = require('fs').createWriteStream(file);
+const fileStream = fs.createWriteStream(file);
 
 cc({
   preset: 'angular',

@@ -10,6 +10,10 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, 'e2e/**'],
     root: fileURLToPath(new URL('./', import.meta.url))
   },
+  define: {
+    // Mirror what Rollup does at build time: in test env, always treat as DEV mode
+    __DEV__: true
+  },
   plugins: [vue()],
   resolve: {
     alias: {

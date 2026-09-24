@@ -1,157 +1,272 @@
-import { isString, merge } from '@vue-formily/util';
-import { ElementOptions, ElementSchema } from '../../types';
-import { genHtmlName, genProps } from '../../helpers';
-import { throwFormilyError } from '../../utils';
-import { Objeto } from '../Objeto';
-import { Validation } from '../validations';
+import { isEmpty, merge } from '@vue-formily/util';
+import {
+  ConfigParam,
+  ElementConfig,
+  ElementEvents,
+  ElementHook,
+  ElementInstance,
+  ElementInternalData,
+  ElementOptions,
+  ElementReactiveData,
+  ElementSchema,
+  ValidationEvents
+} from '@/types';
+import { cloneValue, mergeConfigs } from '@/helpers';
+import { ELEMENT_TYPES } from '@/constants';
+import { ELEMENT_HOOKS } from '@/hooks/element';
+import { Validation } from '@/core/validations';
+import { Schemy } from '@/core/Schemy';
 
-function genElementAncestors(elem: Element): any[] | null {
-  const path = [];
+/**
+ * The base class for all form elements (Field, Group, Collection, etc.).
+ * It extends Schemy and provides core functionality for state management,
+ * validation, and hierarchy traversal (parent/ancestors).
+ *
+ * The class uses four generic types:
+ * S: Schema Type
+ * C: Config Type (including 'parent')
+ * I: Internal Data Type (_d)
+ * R: Reactive Data Type (_r)
+ */
+export abstract class Element<
+  S extends ElementSchema = ElementSchema,
+  C extends ElementConfig = ElementConfig,
+  I extends ElementInternalData<S, C> = ElementInternalData<S, C>,
+  R extends ElementReactiveData = ElementReactiveData
+> extends Schemy<S, C, I, R> {
+  /**
+   * Static property to define the form type of the element.
+   */
+  static FORM_TYPE = ELEMENT_TYPES.ELEMENT as string;
 
-  let parent = elem.parent;
+  /**
+   * Abstract method that must be implemented by concrete classes (e.g., Field)
+   * to handle setting the raw value, often involving type conversion/normalization.
+   */
+  abstract setRaw(value: any): any;
 
-  while (parent) {
-    path.unshift(parent);
-    parent = parent.parent;
-  }
+  /**
+   * The validation instance responsible for running configured rules.
+   */
+  validation: Validation;
 
-  return path.length ? path : null;
-}
+  constructor(schema: S, config?: ConfigParam<ElementConfig>) {
+    super(schema, config);
 
-let _options = {
-  silent: true
-} as ElementOptions;
+    const { _d, _r } = this;
+    const { rules = [] } = schema;
+    const { reactor, plugs, validation } = this.config;
 
-export class Element extends Objeto {
-  static accept(schema: any) {
-    ['formId'].forEach(prop => {
-      if (!prop) {
-        throwFormilyError(`${prop} is not defined`);
-      }
+    // Initialize the Validation instance, passing the element itself as context
+    this.validation = new Validation({ rules }, [
+      {
+        reactor,
+        plugs,
+        context: this as ElementInstance
+      },
+      validation
+    ]);
+
+    // 1. 'input': Triggered when the element's raw input changes.
+    this.on<ElementEvents, 'input'>('input', ({ detail }) => {
+      _d.prevRaw = cloneValue(this.raw);
+
+      // Run 'element.raw' hook to allow plugs to modify the raw value before storage
+      const newRaw = this.hook.roll<ElementHook, 'element.raw'>('element.raw', {
+        value: detail.value
+      });
+
+      _r.set('raw', newRaw);
     });
 
-    return schema;
+    // 2. 'validate': Triggered when validation starts (usually after input/blur).
+    this.on<ElementEvents, 'validate'>('validate', ({ detail }) => {
+      _d.prevValue = cloneValue(this.value);
+      // Run 'element.value' hook to allow transformation/normalization of the value
+      _d.value = this.hook.roll<ElementHook, 'element.value'>('element.value', {
+        value: detail.value
+      });
+    });
+
+    // 3. 'validated': Triggered after validation completes.
+    this.validation.on<ValidationEvents, 'validated'>('validated', () => {
+      // Update the reactive value only if the element is currently valid
+      _r.set('value', this.valid ? _d.value : null);
+    });
   }
 
-  static register(options: ElementOptions) {
-    _options = merge(_options, options);
+  get defaultConfig(): ElementConfig {
+    return mergeConfigs([
+      super.defaultConfig,
+      {
+        hooks: ELEMENT_HOOKS
+      }
+    ]);
   }
 
-  props: Record<string, any> = {};
-
-  constructor(schema: ElementSchema, parent?: Element | null) {
-    super();
-
-    Element.accept(schema);
-
-    const data = this._d;
-    const reactive = data.r;
-    const { props = {}, on = {}, options, rules = [] } = schema;
-
-    reactive.data = {};
-    reactive.shaken = false;
-    reactive.invalidated = false;
-    data.parent = parent || null;
-    data.schema = schema;
-    data.ancestors = genElementAncestors(this);
-    data.options = merge({}, _options, options);
-
-    genProps.call(this, this.props, props);
-
-    Object.keys(on).map(name => this.on(name, on[name]));
-
-    reactive.validation = new Validation(rules, this);
-  }
-
+  /**
+   * Retrieves the parent element instance (Type P from ElementConfig<P>).
+   */
   get parent() {
-    return this._d.parent;
+    return this.config.parent;
   }
 
+  /**
+   * Computes an array of all ancestor elements, from the highest level down to the immediate parent.
+   */
+  get ancestors() {
+    const parent = this.parent;
+
+    return parent ? [...parent.ancestors, parent] : [];
+  }
+
+  /**
+   * Indicates if the element has been 'shaken' (had user interaction or validation triggered).
+   */
   get shaken() {
-    return this._d.r.shaken;
+    return this._r.get('shaken');
   }
 
+  /**
+   * Indicates if validation is currently running asynchronously.
+   */
   get pending() {
     return this.validation.pending;
   }
 
+  /**
+   * Gets the model name for the element, defaulting to the formId if 'model' is not provided in schema.
+   */
   get model() {
     return this.schema.model || this.formId;
   }
 
-  get schema() {
-    return this.getSchema();
+  /**
+   * The current raw input value.
+   */
+  get raw() {
+    return this._r.get('raw');
   }
 
+  /**
+   * The previously stored raw input value.
+   */
+  get prevRaw() {
+    return this._d.prevRaw;
+  }
+
+  /**
+   * The processed/validated value for the model. Returns null if not valid.
+   */
+  get value() {
+    return this.valid ? this._r.get('value') : null;
+  }
+
+  /**
+   * The previously stored processed value.
+   */
+  get prevValue() {
+    return this._d.prevValue;
+  }
+
+  /**
+   * The options/metadata defined in the internal data.
+   */
   get options(): ElementOptions {
     return this._d.options;
   }
 
-  get validation() {
-    return this._d.r.validation;
-  }
-
+  /**
+   * Gets the error message to display.
+   * Priority: invalidated message (string) > Validation error > null.
+   */
   get error() {
-    const {
-      shaken,
-      invalidated,
-      validation: { errors }
-    } = this._d.r;
+    const { shaken, invalidated } = this._r.value as ElementReactiveData;
+    const { errors } = this.validation;
 
+    // If not shaken (no interaction) or currently valid, hide the error.
     if (!shaken || this.valid) {
       return null;
     }
 
-    return invalidated === true ? null : isString(invalidated) ? invalidated : errors ? errors[0] : null;
+    return invalidated || errors[0] || null;
   }
 
-  get data() {
-    return this._d.r.data;
-  }
-
-  getSchema(): Record<string, any> {
-    const schema = this._d.schema.__origin;
-    const rules = this.validation.getSchema();
-
-    if (rules) {
-      schema.rules = rules;
-    } else {
-      delete schema.rules;
-    }
-
-    return schema;
-  }
-
+  /**
+   * Unique identifier for the element's form context.
+   */
   get formId(): string {
-    return this.schema.formId;
+    return this._d.rawSchema.formId;
   }
 
+  /**
+   * Computes the HTML 'name' attribute value via a hook.
+   */
   get htmlName() {
-    return this.getHtmlName();
+    return this.hook.roll<ElementHook, 'element.htmlName'>('element.htmlName');
   }
 
+  /**
+   * Checks if the element is valid (not internally invalidated AND passed validation rules).
+   */
   get valid() {
-    return this.isValid();
+    return isEmpty(this.invalidated) && this.validation.valid;
   }
 
-  isValid() {
-    return !this._d.r.invalidated && this.validation.valid;
+  /**
+   * Gets the internal invalidation message. Returns an empty string if valid.
+   * This is used as the high-priority error message.
+   */
+  get invalidated() {
+    return this._r.get('invalidated');
   }
 
-  getHtmlName() {
-    return genHtmlName(this, this._d.ancestors);
+  /**
+   * Gets the form type from the schema.
+   */
+  get formType() {
+    return this.schema.formType as S['formType'];
   }
 
+  /**
+   * Marks the element as 'shaken', typically revealing validation errors.
+   */
   shake() {
-    this._d.r.shaken = true;
+    this._r.set('shaken', true);
   }
 
   cleanUp() {
-    this._d.r.shaken = false;
-    this._d.r.invalidated = false;
+    this._r.set('shaken', false);
+    this._r.set('invalidated', '');
   }
 
-  invalidate(message?: string) {
-    this._d.r.invalidated = message || true;
+  /**
+   * Manually sets an internal invalidation message, overriding rule validation errors.
+   * Requires a non-empty string message.
+   *
+   * @param message - The error message to set for invalidation.
+   */
+  invalidate(message: string) {
+    this._r.set('invalidated', message);
+  }
+
+  /**
+   * Throws an exception, merging the current formId into the metadata.
+   *
+   * @param message - The exception message.
+   * @param meta - Additional metadata to merge.
+   */
+  throw(message: string, meta?: Record<string, any>) {
+    const { formId } = this;
+
+    super.throw(
+      message,
+      merge(
+        {
+          formId
+        },
+        meta
+      )
+    );
   }
 }

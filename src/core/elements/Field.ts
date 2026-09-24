@@ -1,69 +1,46 @@
-import { isNumeric } from '@vue-formily/util';
-import { FieldSchema, FieldType, FieldValue, ReadonlySchema } from '../../types';
+import { isUndefined } from '@vue-formily/util';
+import {
+  ConfigParam,
+  FieldConfig,
+  FieldEvents,
+  FieldInternalData,
+  FieldReactiveData,
+  FieldSchema,
+  FieldType,
+  FieldValue
+} from '@/types';
 
+import { ELEMENT_DATA_TYPES, ELEMENT_TYPES } from '@/constants';
 import { Element } from './Element';
-import { toString, isUndefined, throwFormilyError } from '../../utils';
-import { normalizeSchema } from '../../helpers';
-import { FieldInstance } from '../../types/instances';
+import { FIELD_HOOKS } from '@/hooks/field';
+import { mergeConfigs } from '@/helpers';
 
-const FORM_TYPE = 'field';
-const casts: Record<string, (value: any, ...args: any[]) => FieldValue> = {
-  string(value: any) {
-    return value !== null ? toString(value) : null;
-  },
-  number(value: any) {
-    return isNumeric(value) ? +value : null;
-  },
-  boolean(value: any) {
-    return !!(value === true || value === 'true');
-  },
-  date(value: any) {
-    const date = new Date(value);
+export class Field<
+  S extends FieldSchema<any> = FieldSchema<any>,
+  C extends FieldConfig = FieldConfig,
+  I extends FieldInternalData<S, C> = FieldInternalData<S, C>,
+  R extends FieldReactiveData = FieldReactiveData
+> extends Element<S, C, I, R> {
+  static FORM_TYPE = ELEMENT_TYPES.FIELD as string;
 
-    return !isNaN(date.getTime()) ? date : null;
-  }
-};
-
-export class Field extends Element {
-  static FORM_TYPE = FORM_TYPE;
-  static FIELD_TYPE_STRING = 'string';
-  static FIELD_TYPE_NUMBER = 'number';
-  static FIELD_TYPE_BOOLEAN = 'boolean';
-  static FIELD_TYPE_DATE = 'date';
-
-  static accept(schema: any): FieldSchema {
-    const { type: schemaType, formId } = schema;
-    const type: FieldType = schemaType ? (Field as any)[`FIELD_TYPE_${schemaType.toUpperCase()}`] : 'string';
-
-    if (!type) {
-      throwFormilyError('Invalid `type`', { formId });
-    }
-
-    return normalizeSchema(schema, type);
-  }
-
-  static create<F extends ReadonlySchema<FieldSchema>>(schema: FieldSchema, parent?: Element | null) {
-    return new Field(schema as unknown as FieldSchema, parent) as unknown as FieldInstance<F>;
-  }
-
-  constructor(schema: FieldSchema, parent?: Element | null) {
-    super(Field.accept(schema), parent);
+  constructor(schema: S, config?: ConfigParam<FieldConfig>) {
+    super(schema, config);
 
     const { value, default: defu } = schema;
 
-    const hasDefault = !isUndefined(defu);
-
-    const data = this._d;
-
-    data.r.formatted = null;
-    data.default = hasDefault ? defu : null;
-
     this.setCheckedValue(schema.checkedValue);
-    this.setValue(!isUndefined(value) ? value : defu).then(() => this.emit('created', this));
+    this.setValue(!isUndefined(value) ? value : defu, { asInitial: true }).then(() =>
+      this.emit<FieldEvents, 'created'>('created')
+    );
   }
 
-  get formType() {
-    return FORM_TYPE;
+  get defaultConfig(): FieldConfig {
+    return mergeConfigs([
+      super.defaultConfig,
+      {
+        hooks: FIELD_HOOKS
+      }
+    ]);
   }
 
   get default() {
@@ -74,92 +51,98 @@ export class Field extends Element {
     return this.schema.type || 'string';
   }
 
-  get formatted() {
-    return this._d.r.formatted;
+  set raw(value: any) {
+    this.setRaw(value);
   }
 
   get raw() {
-    return this._d.r.raw;
-  }
-
-  set raw(value: any) {
-    this.setRaw(value);
+    return super.raw;
   }
 
   async setRaw(value: any) {
     await this.setValue(value);
   }
 
-  get value() {
-    return this.valid ? this.cast(this.raw) : null;
-  }
-
   set value(value: any) {
     this.setValue(value);
   }
 
-  async setValue(value: any) {
-    const { r } = this._d;
-    const curRaw = r.raw || '';
+  get value() {
+    return super.value;
+  }
 
-    r.raw = !isUndefined(value) ? toString(value) : curRaw;
+  async setValue(value: any, { asInitial }: { asInitial?: boolean } = {}) {
+    this.emit<FieldEvents, 'input'>('input', { value });
 
-    const raw = r.raw;
+    const { raw, prevRaw } = this;
 
-    if (this.options.silent) {
-      await this.validate();
+    if (raw !== prevRaw) {
+      this.emit<FieldEvents, 'changed'>('changed');
     }
 
-    if (raw !== curRaw) {
-      this.emit('changed', raw, curRaw, this);
+    await this.validate();
+
+    if (asInitial) {
+      this.setInitial(this._d.value);
+    }
+
+    if (this.value !== this.prevValue) {
+      this.emit<FieldEvents, 'updated'>('updated');
     }
 
     return this.value;
   }
 
-  cast(value: any) {
-    return casts[this.type](value);
+  get checkedValue() {
+    const { checkedValue } = this._d;
+
+    if (!checkedValue && this.type === ELEMENT_DATA_TYPES.BOOLEAN) {
+      return 'true';
+    }
+
+    return checkedValue;
   }
 
-  setCheckedValue(checkedValue: any) {
+  setCheckedValue(checkedValue?: string) {
     this._d.checkedValue = checkedValue;
   }
 
   get checked() {
-    const { checkedValue } = this._d;
+    const { checkedValue } = this;
 
-    if (this.type === Field.FIELD_TYPE_BOOLEAN) {
-      return this.value;
-    }
+    return !!this.raw && this.raw === checkedValue;
+  }
 
-    return !isUndefined(checkedValue) && toString(this.value) === checkedValue;
+  get dirty() {
+    return this._r.get('value') !== this._d.initialValue;
+  }
+
+  setInitial(value: FieldValue) {
+    this._d.initialValue = value;
   }
 
   async reset() {
     this.cleanUp();
-    this.validation.reset();
 
-    await this.setRaw(this.default !== null ? this.default : '');
+    const originalValue = this._d.initialValue;
+
+    await this.setRaw(originalValue);
   }
 
   async clear() {
     this.cleanUp();
 
-    await this.setValue('');
+    const defaultValue = this.default !== undefined ? this.default : '';
+
+    await this.setRaw(defaultValue);
   }
 
   async validate() {
-    const { r, schema } = this._d;
+    this.emit<FieldEvents, 'validate'>('validate', { value: this.raw });
 
-    this.emit('validate', this);
+    await this.validation.validate(this.raw, this.props);
 
-    await this.validation.validate(this.cast(this.raw), this.props, this);
-
-    const format = (schema as FieldSchema).format;
-
-    r.formatted = format ? this.format(format, this.type) : null;
-
-    this.emit('validated', this);
+    this.emit<FieldEvents, 'validated'>('validated', { value: this.value });
 
     return this.valid;
   }

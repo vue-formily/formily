@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "ESNext",
     "module": "esnext",
     "strict": true,
     "importHelpers": true,
@@ -18,11 +18,7 @@
         "src/*"
       ]
     },
-    "lib": [
-      "esnext",
-      "es2017",
-      "dom"
-    ]
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
   },
   "include": [
     "src/**/*.d.ts",
@@ -35,6 +31,7 @@
     "tests/**/*.js"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "dist"
   ]
 }

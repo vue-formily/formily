@@ -1,98 +1,107 @@
-import { isFunction, isPlainObject, isString, merge } from '@vue-formily/util';
-import { RuleSchema, Validator } from '../../types';
+import { isString } from '@vue-formily/util';
 
-import { Objeto } from '../Objeto';
-import { ValidationInstance } from '../../types/instances';
+import {
+  ConfigParam,
+  RuleConfig,
+  RuleHook,
+  RuleInternalData,
+  RuleMessage,
+  RuleReactiveData,
+  RuleSchema
+} from '@/types';
+import { Schemy } from '@/core/Schemy';
+import { RULE_HOOKS } from '@/hooks/rule';
+import { mergeConfigs } from '@/helpers';
 
-export class Rule extends Objeto {
-  message?: string | ((...args: any[]) => string);
-  validator!: Validator;
+const defaultValidator = () => true;
 
-  constructor(rule: Rule | RuleSchema | Validator, container: ValidationInstance | null = null) {
-    super();
+export class Rule<
+  S extends RuleSchema = RuleSchema,
+  C extends RuleConfig = RuleConfig,
+  I extends RuleInternalData<S, C> = RuleInternalData<S, C>,
+  R extends RuleReactiveData = RuleReactiveData
+> extends Schemy<S, C, I, R> {
+  constructor(schema: S, config?: ConfigParam<RuleConfig>) {
+    super(schema, config);
 
-    const data = this._d;
-    const { r } = data;
+    this.reset();
+  }
 
-    data.name = rule.name || Date.now();
-    data.container = container;
-    data.schema = rule instanceof Rule ? rule.getSchema() : rule;
-
-    r.pending = false;
-    r.error = null;
-    r.valid = true;
-
-    if (isFunction(rule)) {
-      this.validator = rule;
-    } else if (isPlainObject(rule)) {
-      this.validator = rule.validator;
-      this.message = rule.message;
-    }
+  get defaultConfig(): RuleConfig {
+    return mergeConfigs([
+      super.defaultConfig,
+      {
+        hooks: RULE_HOOKS
+      }
+    ]);
   }
 
   get name() {
-    return this._d.name;
+    return this.schema.name;
   }
 
-  get container() {
-    return this._d.container;
+  get context() {
+    return (this.config as RuleConfig).context;
   }
 
-  get context(): Record<string, any> | null {
-    return this.container ? this.container.context : null;
+  get validator() {
+    return (this.schema as RuleSchema).validator || defaultValidator;
+  }
+
+  get message() {
+    return this.hook.roll<RuleHook, 'rule.message'>('rule.message', {
+      value: this._r.get('tmpMessage') || this._r.get('message')
+    });
   }
 
   get valid() {
-    return this._d.r.valid;
+    return this._r.get('valid');
   }
 
   get error() {
-    return this._d.r.error;
+    return this.valid ? null : this.message;
   }
 
   get pending() {
-    return this._d.r.pending;
-  }
-
-  getSchema() {
-    return this._d.schema;
+    return this._r.get('pending');
   }
 
   reset() {
-    this._d.r.error = null;
-    this._d.r.valid = true;
+    this._r.patch({
+      valid: true,
+      pending: false,
+      tmpMessage: undefined
+    } as Partial<R>);
+
+    this.setMessage(this.schema.message);
   }
 
-  async validate(value: any, props?: Record<string, any>, ...args: any[]): Promise<Rule> {
-    this._d.r.pending = true;
+  setMessage(message?: RuleMessage) {
+    this._r.set('message', message);
+  }
 
-    this.emit('validate', this);
+  async validate(value: any, props?: Record<string, any>): Promise<boolean> {
+    this._r.set('pending', true);
 
-    const { r } = this._d;
+    this.emit('validate', { value });
 
-    let error: string | null = null;
-    let valid = true;
-    let result: string | boolean = true;
-    const context = this.context || {};
+    const validatorProps = this.hook.roll<RuleHook, 'rule.validatorProps'>('rule.validatorProps', {
+      value: props
+    });
 
-    if (isFunction(this.validator)) {
-      result = await this.validator(value, merge({}, context.props, props), ...args);
+    const result = await this.validator(value, validatorProps);
+    const isMessage = isString(result);
+    const valid = result === false ? false : !isMessage;
+    const tmpMessage = isMessage ? result : '';
 
-      if (result === false) {
-        error = isFunction(this.message) ? this.message(...args) : this.format(this.message, 'string', ...args);
-        valid = false;
-      } else if (isString(result)) {
-        error = result;
-        valid = false;
-      }
-    }
+    this._r.patch({
+      valid,
+      pending: false,
+      tmpMessage
+    } as Partial<R>);
 
-    r.error = error;
-    r.valid = valid;
-    r.pending = false;
+    this.emit('validated', { value });
 
-    this.emit('validated', this);
-
-    return this;
+    return this.valid;
   }
 }

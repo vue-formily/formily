@@ -1,98 +1,186 @@
-import { EventHandler } from '../core/Evento';
-import { ValidationRuleSchema } from './validation';
-import { Builtin } from './generic';
-import { Validation } from '../core/validations';
-import { CollectionItem } from '../core/elements';
+import { ValidationConfig, ValidationRuleSchema } from './validation';
+import { SchemyConfig, SchemyInternalData, SchemyReactiveData, SchemySchema } from './schemy';
+import { ValueOf } from './generic';
+import { ELEMENT_TYPES, FIELD_DATA_TYPES } from '../constants';
+import { SharedConfig } from './config';
+import {
+  CollectionEvents,
+  ContainerEvents,
+  ElementEvents,
+  FieldEvents,
+  FormEvents,
+  GroupEvents
+} from './instanceEvents';
+import { EchoEvents } from './events';
 
-export interface ElementData {
-  r: {
-    shaken: boolean;
-    invalidated: string | boolean;
-    validation: Validation;
-    data: Record<string, any>;
-  };
-  ancestors: any[] | null;
-  schema: any;
+export type ElementScopes = {
+  validation?: ValidationConfig;
+};
+export type ElementConfig<
+  P = Record<string, any>,
+  SC extends Record<string, any> = Record<string, any>
+> = SchemyConfig & {
+  parent?: P;
+} & SC;
+export type ElementInternalData<
+  S extends ElementSchema<any> = ElementSchema<any>,
+  C extends ElementConfig = ElementConfig,
+  R = any,
+  V = any
+> = SchemyInternalData<S, C> & {
+  schema: S;
   options: ElementOptions;
-  parent: Element | null;
-}
+  parent?: C['parent'];
+  prevRaw: R;
+  value: V;
+  prevValue: V;
+};
+export type ElementReactiveData<R = any, V = any> = SchemyReactiveData & {
+  shaken: boolean;
+  invalidated: string;
+  raw: R;
+  value: V;
+  dirty: boolean;
+};
 
-export type FieldData = ElementData & {
-  r: {
-    formatted: string | null;
-    error: string | null;
-    raw: string;
-  };
-  checkedValue: any;
+export type ContainerConfig<
+  P extends Record<string, any> = Record<string, any>,
+  SC extends Record<string, any> = Record<string, any>
+> = ElementConfig<P, SC> & {
+  shared?: SharedConfig;
+};
+export type GroupScopes = ElementScopes & {
+  [ELEMENT_TYPES.FIELD]?: FieldConfig;
+  [ELEMENT_TYPES.COLLECTION]?: CollectionConfig;
+};
+export type GroupConfig<
+  P extends Record<string, any> = Record<string, any>,
+  SC extends GroupScopes = GroupScopes
+> = ContainerConfig<P, SC> & {
+  elements?: any[];
+};
+export type FormConfig = GroupConfig;
+export type CollectionScopes = ElementScopes & {
+  [ELEMENT_TYPES.GROUP]?: GroupConfig;
+};
+export type CollectionConfig<
+  P extends Record<string, any> = Record<string, any>,
+  SC extends CollectionScopes = CollectionScopes
+> = ContainerConfig<P, SC>;
+
+export type FieldConfig<P extends Record<string, any> = Record<string, any>> = ElementConfig<P>;
+export type FieldInternalData<
+  S extends FieldSchema = FieldSchema,
+  C extends FieldConfig = FieldConfig
+> = ElementInternalData<S, C, string, FieldValue> & {
+  checkedValue?: string;
   default: any;
+  initialValue: FieldValue;
+};
+export type FieldReactiveData = ElementReactiveData<string, FieldValue>;
+export type FieldRaw = string;
+
+export type ContainerAddElementOptions = {
+  at?: number;
+  value?: any;
+};
+export type ContainerInternalData<
+  S extends ContainerSchema<any> = ContainerSchema<any>,
+  C extends ContainerConfig = ContainerConfig,
+  PR = any,
+  PV = any
+> = ElementInternalData<S, C, PR, PV>;
+export type ContainerReactiveData<
+  E extends Record<string, any> = Record<string, any>,
+  R = any,
+  V = any
+> = ElementReactiveData<R, V> & {
+  elements: E[];
 };
 
-export type CollectionData = Omit<ElementData, 'schema'> & {
-  r: {
-    value: any[] | null;
-  };
-  schema: CollectionSchema;
-  dummy: CollectionItem;
-  tempValue?: any;
-};
-
-export type GroupData = Omit<ElementData, 'schema'> & {
-  r: {
-    value: Record<string, any> | null;
-  };
-  tempValue?: any;
+export type GroupInternalData<
+  S extends GroupSchema = GroupSchema,
+  C extends GroupConfig = GroupConfig
+> = ContainerInternalData<S, C> & {
+  prevRaw: Record<string, any>;
   schema: GroupSchema;
 };
+export type GroupReactiveData<E extends Record<string, any> = Record<string, any>> = ContainerReactiveData<E> & {
+  aliases: Record<string, any>;
+};
+export type GroupRaw = Record<string, any>;
+export type GroupValue = Record<string, any>;
 
-export type ElementOptions = {
-  silent?: boolean;
+export type CollectionInternalData<
+  S extends CollectionSchema = CollectionSchema,
+  C extends CollectionConfig = CollectionConfig
+> = ContainerInternalData<S, C> & {
+  schema: CollectionSchema;
+};
+export type CollectionReactiveData<E extends Record<string, any> = Record<string, any>> = ContainerReactiveData<E>;
+export type CollectionRaw = GroupRaw[];
+export type CollectionValue = GroupValue[];
+
+export type ElementOptions = Record<string, any>;
+
+export type ElementSchema<T extends string = string, E extends EchoEvents = ElementEvents> = SchemySchema<E> & {
+  formId: string;
+  formType: T;
+  model?: string;
+  options?: ElementOptions;
+  rules?: ValidationRuleSchema[];
 };
 
-export interface ElementSchema<I = string> {
-  formId: I;
-  model?: I;
-  props?: Record<string, any>;
-  on?: Record<string, EventHandler>;
-  options?: ElementOptions;
-  rules?: ValidationRuleSchema<I>[];
+export type AnySchema = FieldSchema<any> | GroupSchema<any> | CollectionSchema<any>;
+export type AnyConfigs = FieldConfig | GroupConfig | CollectionConfig;
+export type AnyElementTypes = typeof ELEMENT_TYPES;
+
+export type ContainerSchema<T extends string, E extends EchoEvents = ContainerEvents> = ElementSchema<T, E>;
+
+export interface GroupSchema<
+  T extends string = AnyElementTypes['GROUP'],
+  E extends EchoEvents = GroupEvents<any>
+> extends ContainerSchema<T, E> {
+  fields: AnySchema[];
+  value?: GroupValue;
 }
 
-export type ElementsSchemas<I = string> = FieldSchema<I> | GroupSchema<I> | CollectionSchema<I>;
+export type FormSchema<
+  T extends string = AnyElementTypes['GROUP'],
+  E extends EchoEvents = FormEvents<any>
+> = GroupSchema<T, E>;
 
-export interface GroupSchema<I = string> extends ElementSchema<I> {
-  formType: 'group';
-  fields: ElementsSchemas<I>[];
-  value?: any;
+export type CollectionElementSchema = Omit<GroupSchema, 'formId' | 'formType'>;
+
+export interface CollectionSchema<
+  T extends string = AnyElementTypes['COLLECTION'],
+  E extends EchoEvents = CollectionEvents<any>
+> extends ContainerSchema<T, E> {
+  group: CollectionElementSchema;
+  value?: CollectionValue;
 }
 
-export type CollectionItemSchema<I = string> = Omit<GroupSchema<I>, 'formId' | 'formType'>;
+export type CollectionAddGroupOptions = ContainerAddElementOptions;
+export type GroupAddFieldOptions = ContainerAddElementOptions;
 
-export interface CollectionSchema<I = string> extends ElementSchema<I> {
-  formType: 'collection';
-  group: CollectionItemSchema<I>;
-  value?: any;
-}
-
-export type FormSchema<I = string> = GroupSchema<I>;
-
-export type FieldType = 'string' | 'number' | 'boolean' | 'date';
+export type FieldType = ValueOf<typeof FIELD_DATA_TYPES>;
 export type FieldValue = string | number | boolean | Date | null;
+export type InferFieldValue<T> = T extends 'date'
+  ? Date
+  : T extends 'number'
+    ? number
+    : T extends 'boolean'
+      ? boolean
+      : T extends 'string'
+        ? string
+        : never;
 
-export type Format = string | ((field: any) => string);
-
-export interface FieldSchema<I = string> extends ElementSchema<I> {
+export interface FieldSchema<E extends EchoEvents = FieldEvents<any>> extends ElementSchema<
+  AnyElementTypes['FIELD'],
+  E
+> {
   type?: FieldType;
-  formType: 'field';
-  format?: Format;
-  default?: any;
-  value?: any;
-  checkedValue?: any;
+  default?: FieldValue;
+  value?: FieldValue;
+  checkedValue?: string;
 }
-
-export type ReadonlySchema<T> = T extends Builtin
-  ? T
-  : T extends Array<any>
-  ? Readonly<T>
-  : T extends Record<string, any>
-  ? { readonly [K in keyof T]: ReadonlySchema<T[K]> }
-  : Readonly<T>;

@@ -1,201 +1,120 @@
-import { findIndex, isPlainObject } from '@vue-formily/util';
-import { CollectionSchema, CollectionItemSchema, ElementsSchemas, GroupSchema, ReadonlySchema } from '../../types';
-import { Element } from './Element';
-import { Group } from './Group';
+import { isUndefined } from '@vue-formily/util';
 import {
-  cascadeRule,
-  normalizeSchema,
-  updateValue,
-  addFieldOrGroup,
-  resetItems,
-  clearItems,
-  validateItems
-} from '../../helpers';
-import { isUndefined, logMessage, throwFormilyError } from '../../utils';
-import { CollectionInstance, CollectionItemInstance } from '../../types/instances';
+  CollectionSchema,
+  CollectionConfig,
+  CollectionInternalData,
+  CollectionElementInstance,
+  CollectionAddGroupOptions,
+  CollectionReactiveData,
+  CollectionHook,
+  ConfigParam
+} from '@/types';
+import { mergeConfigs } from '@/helpers';
+import { ELEMENT_TYPES } from '@/constants';
+import { COLLECTION_HOOKS } from '@/hooks/collection';
 
-const FORM_TYPE = 'collection';
-const TYPE = 'set';
+import { Container } from './Container';
 
-export class CollectionItem extends Group {
-  get index() {
-    const { groups } = this.parent as any;
+export class Collection<
+  S extends CollectionSchema = CollectionSchema,
+  C extends CollectionConfig = CollectionConfig,
+  I extends CollectionInternalData<S, C> = CollectionInternalData<S, C>,
+  R extends CollectionReactiveData = CollectionReactiveData
+> extends Container<S, C, I, R> {
+  static FORM_TYPE = ELEMENT_TYPES.COLLECTION;
 
-    return findIndex(groups, (group: any) => group === this);
+  /**
+   * Serializes concurrent setValue calls to prevent race conditions
+   * where parallel calls snapshot the same initial groups state.
+   */
+  private _setValueQueue: Promise<any> = Promise.resolve();
+
+  constructor(schema: S, config?: ConfigParam<CollectionConfig>) {
+    super(schema, config);
+
+    const { value = [] } = schema;
+
+    (!isUndefined(value) ? this.setValue(value, { asInitial: true }) : this.validate()).then(() =>
+      this.emit('created')
+    );
   }
 
-  get formId() {
-    return `${(this.parent as Collection).formId}${this.index}`;
-  }
-}
-
-async function updateCollectionValue(this: Collection) {
-  await updateValue.call(this, this.groups);
-}
-
-function genItem<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(
-  { rules }: CollectionSchema,
-  groupSchema: CollectionItemSchema,
-  context: Collection
-): CollectionItemInstance<T> {
-  return new CollectionItem(
-    cascadeRule(
+  get defaultConfig(): CollectionConfig {
+    return mergeConfigs([
+      super.defaultConfig,
       {
-        formType: 'group',
-        ...groupSchema
-      } as GroupSchema,
-      rules
-    ),
-    context
-  ) as CollectionItemInstance<T>;
-}
-
-export class Collection extends Element {
-  static FORM_TYPE = FORM_TYPE;
-
-  static accept(schema: any): CollectionSchema {
-    const { formId, group } = schema;
-
-    if (!isPlainObject(group)) {
-      throwFormilyError('`group` must be an object', { formId });
-    }
-
-    return normalizeSchema(schema, TYPE);
+        hooks: COLLECTION_HOOKS
+      }
+    ]);
   }
 
-  static create<F extends ReadonlySchema<CollectionSchema>>(schema: CollectionSchema, parent?: Element | null) {
-    return new Collection(schema as unknown as CollectionSchema, parent) as unknown as CollectionInstance<F>;
+  get groups() {
+    return this.elements as CollectionElementInstance<any>[];
   }
 
-  groups: CollectionItem[] = [];
-
-  constructor(schema: CollectionSchema, parent?: Element | null) {
-    super(Collection.accept(schema), parent);
-
-    const { value } = schema;
-    const data = this._d;
-
-    data.r.value = null;
-    data.dummy = genItem(data.schema, data.schema.group, this);
-
-    this.setValue(!isUndefined(value) ? value : []).then(() => this.emit('created', this));
+  async setRaw(value: any[]) {
+    await this.setValue(value);
   }
 
-  get type() {
-    return TYPE;
+  async setValue(
+    value: any[],
+    { from = 0, autoAdd = true, asInitial }: { from?: number; autoAdd?: boolean; asInitial?: boolean } = {}
+  ) {
+    // Serialize concurrent calls: each call waits for the previous to finish
+    // before snapshotting this.groups, preventing duplicate addGroup calls.
+    // Use a recovered queue so errors in one call don't block subsequent calls.
+    const result = this._setValueQueue.then(() => this._doSetValue(value, { from, autoAdd, asInitial }));
+
+    // Keep the queue alive even if this call rejects, so the next call can still run
+    this._setValueQueue = result.catch(() => {});
+
+    return result;
   }
 
-  get formType() {
-    return FORM_TYPE;
-  }
-
-  get value() {
-    return this.valid ? this._d.r.value : null;
-  }
-
-  async addField(schema: ElementsSchemas, options?: { at?: number }) {
-    await Promise.all(this.groups.map(async group => await group.addField(schema, options)));
-
-    await this._d.dummy.addField(schema, options);
-  }
-
-  async removeField(id: string) {
-    await Promise.all(this.groups.map(async group => await group.removeField(id)));
-
-    await this._d.dummy.removeField(id);
-  }
-
-  getSchema(): CollectionSchema {
-    const schema = super.getSchema() as CollectionSchema;
-    const [first] = this.groups;
-
-    if (first) {
-      schema.group = first.getSchema();
-    }
-
-    return schema;
-  }
-
-  async setValue(value: any[], { from = 0, autoAdd = true }: { from?: number; autoAdd?: boolean } = {}) {
+  private async _doSetValue(
+    value: any[],
+    { from = 0, autoAdd = true, asInitial }: { from?: number; autoAdd?: boolean; asInitial?: boolean } = {}
+  ) {
     if (!Array.isArray(value)) {
-      throwFormilyError(logMessage('Invalid value, Group value must be an object'));
+      this.throw(__DEV__ ? 'Collection value must be an array' : '1');
     }
 
     const groups = this.groups.slice(from);
 
     await Promise.all(
-      value.slice(0, autoAdd ? value.length : groups.length).map(async (val: Record<string, any>, index: number) => {
-        let group = groups[index];
+      value
+        .slice(0, autoAdd ? value.length : groups.length)
+        .map(async (groupValue: Record<string, any>, index: number) => {
+          let group = groups[index];
 
-        if (!group) {
-          group = await this.addGroup();
-          await group.setValue(val);
-        } else {
-          await group.setValue(val);
-        }
-      })
+          if (!group) {
+            group = await this.addGroup({ value: groupValue });
+          } else {
+            await group.setValue(groupValue, { asInitial });
+          }
+        })
     );
 
     return this.value;
   }
 
-  shake({ cascade = true }: { cascade?: boolean } = {}) {
-    super.shake();
-
-    if (cascade) {
-      this.groups.forEach(group => group.shake());
-    }
-  }
-
-  isValid(): boolean {
-    return super.isValid() && !this.groups.some(g => !g.valid);
-  }
-
-  async reset() {
-    await resetItems.call(this, this.groups);
-  }
-
-  async clear() {
-    await clearItems.call(this, this.groups);
-  }
-
-  async addGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(): Promise<
-    CollectionItemInstance<T>
-  > {
-    return new Promise(resolve => {
-      const { schema, dummy } = this._d;
-      const groupItem = genItem(schema, dummy.getSchema(), this);
-
-      this.groups.push(groupItem);
-
-      addFieldOrGroup.call(
-        this,
-        groupItem,
-        (...args) => this.emit('groupChanged', ...args),
-        () => updateCollectionValue.call(this),
-        () => resolve(groupItem)
-      );
+  async addGroup(options?: CollectionAddGroupOptions) {
+    const element = this.hook.roll<CollectionHook, 'collection.addGroup'>('collection.addGroup', {
+      params: { options }
     });
+
+    await this.addElement(element, options);
+
+    return element;
   }
 
-  async removeGroup<T extends Readonly<Record<string, any>> = Readonly<Record<string, any>>>(
-    itemOrIndex: CollectionItem | number
-  ): Promise<CollectionItemInstance<T> | null> {
-    const index = itemOrIndex instanceof CollectionItem ? itemOrIndex.index : itemOrIndex;
-    const removed = (this.groups && this.groups[index]) || null;
+  async removeGroup(target: CollectionElementInstance<any> | number) {
+    const element = this.hook.roll<CollectionHook, 'collection.removeGroup'>('collection.removeGroup', {
+      params: { target }
+    });
 
-    if (removed) {
-      (this.groups as CollectionItem[]).splice(index, 1);
+    const removed = await this.removeElement(element as CollectionElementInstance<any>);
 
-      await updateCollectionValue.call(this);
-
-      this.emit('groupRemoved', removed, this);
-    }
-
-    return removed as CollectionItemInstance<T> | null;
-  }
-
-  validate(options: { cascade?: boolean } = {}) {
-    return validateItems.call(this, options, this.groups);
+    return removed;
   }
 }

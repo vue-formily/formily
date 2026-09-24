@@ -1,108 +1,69 @@
-import { findIndex, isNumber, isPlainObject } from '@vue-formily/util';
-import { GroupSchema, ElementsSchemas, ReadonlySchema } from '../../types';
+import { isPlainObject, isUndefined } from '@vue-formily/util';
 
 import {
-  addFieldOrGroup,
-  cascadeRule,
-  clearItems,
-  normalizeSchema,
-  resetItems,
-  updateValue,
-  validateItems
-} from '../../helpers';
-import { Element } from './Element';
-import { isUndefined, throwFormilyError } from '../../utils';
-import { GroupInstance } from '../../types/instances';
+  GroupSchema,
+  GroupConfig,
+  GroupInternalData,
+  GroupReactiveData,
+  ElementInstance,
+  GroupAddFieldOptions,
+  GroupHook,
+  AnySchema,
+  ConfigParam
+} from '@/types';
+import { genAlias, mergeConfigs } from '@/helpers';
+import { ELEMENT_TYPES } from '@/constants';
+import { Container } from './Container';
+import { GROUP_HOOKS } from '@/hooks/group';
 
-const FORM_TYPE = 'group';
-const TYPE = 'enum';
+export class Group<
+  S extends GroupSchema = GroupSchema,
+  C extends GroupConfig = GroupConfig,
+  I extends GroupInternalData<S, C> = GroupInternalData<S, C>,
+  R extends GroupReactiveData = GroupReactiveData
+> extends Container<S, C, I, R> {
+  static FORM_TYPE = ELEMENT_TYPES.GROUP as string;
 
-function genFieldProp(fieldOrModel: any) {
-  return `$${isPlainObject(fieldOrModel) ? fieldOrModel.model : fieldOrModel}`;
-}
-
-async function updateGroupValue(this: Group) {
-  await updateValue.call(this, this.fields);
-}
-
-export function genField(schema: ElementsSchemas, parent: any, ...args: any[]) {
-  const elements = parent._config.elements;
-  const element = elements.find((e: any) => e.FORM_TYPE === schema.formType);
-  const length = elements.length;
-  const { formId } = schema;
-
-  if (!length) {
-    throwFormilyError('No form elements have been registered yet');
-  } else if (!element) {
-    throwFormilyError('`formType` is not defined or supported', {
-      formId
-    });
-  }
-
-  return element.create(schema, parent, ...args);
-}
-
-export class Group extends Element {
-  static FORM_TYPE = FORM_TYPE;
-
-  static accept(schema: any): GroupSchema {
-    const { fields, formId } = schema;
-
-    if (!Array.isArray(fields)) {
-      throwFormilyError('`fields` must be an array.', { formId });
-    }
-
-    return normalizeSchema(schema, TYPE);
-  }
-
-  static create<F extends ReadonlySchema<GroupSchema>>(schema: F, parent?: Element | null) {
-    return new Group(schema as unknown as GroupSchema, parent) as unknown as GroupInstance<F>;
-  }
-
-  fields: Element[] = [];
-
-  constructor(schema: GroupSchema, parent?: Element | null) {
-    super(Group.accept(schema), parent);
+  constructor(schema: S, config?: ConfigParam<GroupConfig>) {
+    super(schema, config);
 
     const { value } = schema;
 
-    this._d.r.value = null;
-
     Promise.all(schema.fields.map(async field => await this.addField(field))).then(async () =>
-      this.setValue(!isUndefined(value) ? value : {}).then(() => this.emit('created', this))
+      this.setValue(!isUndefined(value) ? (value as any) : {}, { asInitial: true }).then(() => this.emit('created'))
     );
   }
 
-  get type() {
-    return TYPE;
+  get defaultConfig(): GroupConfig {
+    return mergeConfigs([
+      super.defaultConfig,
+      {
+        hooks: GROUP_HOOKS
+      }
+    ]);
   }
 
-  get formType() {
-    return FORM_TYPE;
+  get fields() {
+    return this.elements;
   }
 
-  get value() {
-    return this.valid ? this._d.r.value : null;
+  async setRaw(value: Record<string, any>) {
+    await this.setValue(value);
   }
 
-  getSchema(): GroupSchema {
-    return {
-      ...(super.getSchema() as GroupSchema),
-      fields: this.fields.map(({ schema }) => schema as ElementsSchemas)
-    };
-  }
-
-  async setValue(obj: Record<string, any>) {
-    if (!isPlainObject(obj)) {
-      throwFormilyError('Invalid value, Group value must be an object');
+  async setValue(value: Record<string, any>, { asInitial }: { asInitial?: boolean } = {}) {
+    if (!isPlainObject(value)) {
+      this.throw(__DEV__ ? 'Group value must be an object' : '2');
     }
 
     await Promise.all(
-      Object.keys(obj).map(async model => {
-        const field = (this as any)[genFieldProp(model)];
+      Object.keys(value).map(async name => {
+        const alias = genAlias(name);
+
+        const field = (this as any)[alias];
 
         if (field) {
-          await field.setValue(obj[model]);
+          await field.setValue(value[name], { asInitial });
         }
       })
     );
@@ -110,68 +71,23 @@ export class Group extends Element {
     return this.value;
   }
 
-  shake({ cascade = true }: { cascade?: boolean } = {}) {
-    super.shake();
-
-    if (cascade) {
-      this.fields.forEach(field => field.shake());
-    }
-  }
-
-  isValid(): boolean {
-    return super.isValid() && !this.fields.some(field => !field.valid);
-  }
-
-  async reset() {
-    await resetItems.call(this, this.fields);
-  }
-
-  async clear() {
-    await clearItems.call(this, this.fields);
-  }
-
-  async addField(schema: ElementsSchemas, { at }: { at?: number } = {}): Promise<Element> {
-    return new Promise(resolve => {
-      const field = genField(cascadeRule(schema, this._d.schema.rules), this);
-      const prop = genFieldProp(field);
-
-      if (prop in this) {
-        throwFormilyError(`Duplicated model: ${field.model}`);
-      }
-
-      addFieldOrGroup.call(
-        this,
-        field,
-        (...args) => this.emit('fieldChanged', ...args),
-        () => updateGroupValue.call(this),
-        () => resolve(field)
-      );
-
-      (this as any)._config.app.set(this, prop, field);
-
-      this.fields.splice(isNumber(at) ? at : this.fields.length, 0, field);
+  async addField(schema: AnySchema, options?: GroupAddFieldOptions) {
+    const field = this.hook.roll<GroupHook, 'group.addField'>('group.addField', {
+      params: { schema, options }
     });
+
+    await this.addElement(field, options);
+
+    return field;
   }
 
-  async removeField(elementOrId: Record<string, any> | string): Promise<Element | null> {
-    const formId = isPlainObject(elementOrId) ? elementOrId.formId : elementOrId;
-    const index = findIndex(this.fields, field => field.formId === formId);
-    let removed = null;
+  async removeField<T extends ElementInstance>(target: T | string): Promise<T | undefined> {
+    const element = this.hook.roll<GroupHook, 'group.removeField'>('group.removeField', {
+      params: { target }
+    });
 
-    if (index !== -1) {
-      [removed] = this.fields.splice(index, 1);
-
-      (this as any)._config.app.delete(this, genFieldProp(removed));
-
-      await updateGroupValue.call(this);
-
-      this.emit('fieldRemoved', removed, this);
-    }
+    const removed = await this.removeElement(element as T);
 
     return removed;
-  }
-
-  validate(options: { cascade?: boolean } = {}) {
-    return validateItems.call(this, options, this.fields);
   }
 }

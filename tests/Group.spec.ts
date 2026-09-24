@@ -1,124 +1,87 @@
-import { createFormily, defineSchema, GroupSchema, ReadonlySchema, Rule } from '@/index';
-import { Collection, Field, Group } from '@/core/elements';
+import { h } from 'vue';
+import { vi } from 'vitest';
 import flushPromises from 'flush-promises';
-import { required } from './helpers/rules';
-import { GroupInstance } from '@/types/instances';
+import { mount } from '@vue/test-utils';
 
-const formily = createFormily();
+import { createFormily, defineSchema, GroupSchema } from '@/index';
+import { Collection, Field, Group } from '@/core/elements';
+import { getContent, required } from './helpers';
+import { FormInstance, GroupInstance, RuleInstance } from '@/types';
+import { defineGroup } from '@/defineSchema';
 
-[Field, Collection, Group].forEach(F => formily.register(F));
-
-function createGroup<F extends ReadonlySchema<GroupSchema>>(schema: F) {
-  return new Group(schema as unknown as GroupSchema) as unknown as GroupInstance<F>;
+function createGroup<const F extends GroupSchema>(schema: F) {
+  return new Group(schema as unknown as GroupSchema, {
+    elements: [Field, Collection, Group]
+  }) as unknown as GroupInstance<F>;
 }
 
 describe('Group', () => {
   it('Throw error with undefined `fields`', () => {
     expect(function () {
-      // eslint-disable-next-line no-new
-      createGroup({ formId: 'group_test' } as any);
+      // @ts-expect-error test
+      createGroup({ formId: 'group_test' });
     }).toThrowError('[vue-formily] (formId: "group_test") `fields` must be an array.');
   });
 
   it('Should emit created after setting value', () => {
-    createGroup(
-      defineSchema({
-        formId: 'group_test',
-        formType: 'group',
-        value: {
-          a: 'test'
-        },
-        on: {
-          created(this: any) {
-            expect(this.value).toEqual({
-              a: 'test'
-            });
-          }
-        },
-        fields: [
-          {
-            formId: 'a',
-            formType: 'field',
-            rules: [
-              {
-                ...required,
-                message: 'abc'
-              }
-            ]
-          }
-        ]
-      })
-    );
-  });
-
-  it('Can access field from index signature', () => {
-    const group = createGroup(
-      defineSchema({
-        formId: 'group_test',
-        formType: 'group',
-        rules: [
-          {
-            ...required,
-            message: 'test'
-          }
-        ],
-        fields: [
-          {
-            formId: 'a',
-            formType: 'field',
-            rules: [
-              {
-                ...required,
-                message: 'abc'
-              }
-            ]
-          }
-        ]
-      })
-    );
-
-    expect(group).toHaveProperty('$a');
-    expect(group.$a).toBeInstanceOf(Field);
-  });
-
-  it('Can cascade rules', async () => {
-    const s = defineSchema({
-      formId: 'test',
-      formType: 'group',
-      rules: [
-        {
-          ...required,
-          cascade: true,
-          message: 'test'
+    const schema = defineGroup({
+      formId: 'group_test',
+      value: {
+        a: 'test'
+      },
+      on: {
+        created() {
+          expect(this.value).toEqual({
+            a: 'test'
+          });
         }
-      ],
+      },
       fields: [
         {
           formId: 'a',
-          formType: 'field'
-        },
-        {
-          formId: 'b',
           formType: 'field',
           rules: [
             {
               ...required,
-              inherit: false
+              message: 'abc'
             }
           ]
         }
       ]
     });
 
-    const group = createGroup(s);
+    createGroup(schema);
+  });
+
+  it('Can access field from index signature', async () => {
+    const schema = defineSchema({
+      formId: 'group_test',
+      formType: 'group',
+      rules: [
+        {
+          ...required,
+          message: 'test'
+        }
+      ],
+      fields: [
+        {
+          formId: 'a',
+          formType: 'field',
+          rules: [
+            {
+              ...required,
+              message: 'abc'
+            }
+          ]
+        }
+      ]
+    });
+    const group = createGroup(schema);
 
     await flushPromises();
 
-    expect(group.validation.required).toBeInstanceOf(Rule);
-    expect(group.$a.validation.required).toBeInstanceOf(Rule);
-    expect(group.$a.validation.required.message).toBe('test');
-    expect(group.$b.validation.required.valid).toBe(false);
-    expect(group.$b.validation.required.message).toBe(undefined);
+    expect(group).toHaveProperty('$a');
+    expect(group.$a).toBeInstanceOf(Field);
   });
 
   it('Can validate', async () => {
@@ -147,6 +110,8 @@ describe('Group', () => {
       })
     );
 
+    await flushPromises();
+
     await group.validate();
 
     group.shake();
@@ -156,6 +121,8 @@ describe('Group', () => {
     expect(group.$a.error).toBe('abc');
 
     await group.reset();
+
+    await group.validate();
 
     group.shake();
 
@@ -190,6 +157,8 @@ describe('Group', () => {
       })
     );
 
+    await flushPromises();
+
     await group.validate();
 
     group.shake();
@@ -198,7 +167,7 @@ describe('Group', () => {
     expect(group.error).toBe('test');
     expect(group.$a.error).toBe('abc');
 
-    group.reset();
+    await group.reset();
 
     await group.validate();
 
@@ -234,24 +203,45 @@ describe('Group', () => {
         ]
       })
     );
+    const group2 = createGroup(
+      defineSchema({
+        formId: 'group_test',
+        formType: 'group',
+        fields: [
+          {
+            formId: 'a',
+            formType: 'field'
+          }
+        ]
+      })
+    );
 
     expect(group.valid).toBe(true);
+    expect(group2.valid).toBe(true);
 
     await flushPromises();
 
     await group.validate();
+    await group2.validate();
 
     expect(group.valid).toBe(false);
+    expect(group2.valid).toBe(true);
 
     group.$a.shake();
+    group2.$a.shake();
 
     expect(group.$a.valid).toBe(false);
     expect(group.$a.error).toBe('abc');
+    expect(group2.$a.valid).toBe(true);
+    expect(group2.$a.error).toBe(null);
 
-    group.reset();
+    await group.reset();
+    await group2.reset();
 
-    expect(group.valid).toBe(true);
-    expect(group.$a.valid).toBe(true);
+    expect(group.valid).toBe(false);
+    expect(group.$a.valid).toBe(false);
+    expect(group2.valid).toBe(true);
+    expect(group2.$a.valid).toBe(true);
   });
 
   it('Can invalidate', async () => {
@@ -280,15 +270,19 @@ describe('Group', () => {
       })
     );
 
-    group.$a.props.test = true;
+    await flushPromises();
+
+    group.$a.setProps({
+      test: true
+    });
 
     // set value to pass required rule
     await group.$a.setValue('test');
 
     group.$a.validation.addRule({
       name: 'test',
-      validator(_a: any, _b: any, field: Field) {
-        return field.props.test;
+      validator(this: RuleInstance) {
+        return this.context?.context?.props.test;
       },
       message: 'invalid field'
     });
@@ -297,7 +291,9 @@ describe('Group', () => {
     expect(group.error).toBe(null);
 
     // make the rule to false
-    group.$a.props.test = false;
+    group.$a.setProps({
+      test: false
+    });
 
     // trigger update
     await group.validate();
@@ -346,8 +342,10 @@ describe('Group', () => {
 
     const group = createGroup(s) as T;
 
+    await flushPromises();
+
     expect(group.value).toBe(null);
-    await expect(group.setValue('test' as any)).rejects.toThrowError();
+    await expect(group.setValue('test' as any)).rejects.toThrow();
 
     await group.setValue({
       a: 'test',
@@ -411,6 +409,8 @@ describe('Group', () => {
 
     const group = createGroup(s);
 
+    await flushPromises();
+
     await group.validate();
 
     group.$a.shake();
@@ -443,6 +443,8 @@ describe('Group', () => {
         }
       ]
     });
+
+    await flushPromises();
 
     await group.addField({
       formId: 'b',
@@ -498,6 +500,8 @@ describe('Group', () => {
       ]
     });
 
+    await flushPromises();
+
     await group.addField({
       formType: 'field',
       formId: 'b',
@@ -550,7 +554,7 @@ describe('Group', () => {
         expect(value).toEqual({ a: 'a' });
         expect(g.value).toEqual({ a: 'a' });
       })
-      .on('fieldChanged', async (value: any, old: any, f: any) => {
+      .on('fieldChanged', async (_value: any, _old: any, f: any) => {
         expect(f.value).toEqual('a');
       });
   });
@@ -567,6 +571,8 @@ describe('Group', () => {
         }
       ]
     });
+
+    await flushPromises();
 
     group.invalidate('test');
 
@@ -630,21 +636,190 @@ describe('Group', () => {
     expect(count).toEqual(0);
   });
 
-  it('Can get schema', async () => {
+  it('Should be clean (dirty=false) upon initialization', async () => {
     const group = createGroup({
-      formId: 'group_test',
+      formId: 'group_dirty_test',
       formType: 'group',
-      rules: [
+      fields: [
         {
-          ...required,
-          message: 'test'
-        },
-        {
-          name: 'test',
-          cascade: true,
-          validator: () => true
+          formId: 'a',
+          formType: 'field',
+          value: 'initial'
         }
-      ],
+      ]
+    });
+
+    await flushPromises();
+
+    expect(group.dirty).toBe(false);
+    expect(group.$a.dirty).toBe(false);
+  });
+
+  it('Should become dirty if a child field becomes dirty', async () => {
+    const group = createGroup({
+      formId: 'group_dirty_test',
+      formType: 'group',
+      fields: [
+        {
+          formId: 'a',
+          formType: 'field',
+          value: 'initial'
+        }
+      ]
+    });
+
+    await flushPromises();
+
+    // Change child value
+    await group.$a.setValue('changed');
+
+    expect(group.$a.dirty).toBe(true);
+    expect(group.dirty).toBe(true);
+  });
+
+  it('Should return to clean if child reverts to initial value', async () => {
+    const group = createGroup({
+      formId: 'group_dirty_test',
+      formType: 'group',
+      fields: [
+        {
+          formId: 'a',
+          formType: 'field',
+          value: 'initial'
+        }
+      ]
+    });
+
+    await flushPromises();
+
+    // Make dirty
+    await group.$a.setValue('changed');
+    expect(group.dirty).toBe(true);
+
+    // Revert to initial
+    await group.$a.setValue('initial');
+    expect(group.$a.dirty).toBe(false);
+    expect(group.dirty).toBe(false);
+  });
+
+  it('Should remain dirty if one child is clean but another is dirty', async () => {
+    const group = createGroup({
+      formId: 'group_dirty_test',
+      formType: 'group',
+      fields: [
+        { formId: 'a', formType: 'field', value: 'A' },
+        { formId: 'b', formType: 'field', value: 'B' }
+      ]
+    });
+
+    await flushPromises();
+
+    // Change A -> Dirty
+    await group.$a.setValue('A_Changed');
+    expect(group.dirty).toBe(true);
+
+    // Change B -> Dirty
+    await group.$b.setValue('B_Changed');
+    expect(group.dirty).toBe(true);
+
+    // Revert A -> Clean
+    await group.$a.setValue('A');
+    expect(group.$a.dirty).toBe(false);
+
+    // Group should still be dirty because B is dirty
+    expect(group.dirty).toBe(true);
+
+    // Revert B -> Clean
+    await group.$b.setValue('B');
+    expect(group.dirty).toBe(false);
+  });
+
+  it('Should handle setValue with { asInitial: true }', async () => {
+    const group = createGroup({
+      formId: 'group_dirty_test',
+      formType: 'group',
+      fields: [{ formId: 'a', formType: 'field', value: 'old' }]
+    });
+
+    await flushPromises();
+
+    // Update value and set as new initial point
+    await group.setValue({ a: 'new' }, { asInitial: true });
+
+    expect(group.value).toEqual({ a: 'new' });
+
+    // Should be clean because we updated the initial snapshot
+    expect(group.dirty).toBe(false);
+    expect(group.$a.dirty).toBe(false);
+
+    // If we revert to the *old* value, it should now be dirty
+    await group.setValue({ a: 'old' });
+    expect(group.dirty).toBe(true);
+  });
+
+  it('Should be clean after reset()', async () => {
+    const group = createGroup({
+      formId: 'group_dirty_test',
+      formType: 'group',
+      fields: [{ formId: 'a', formType: 'field', value: 'initial' }]
+    });
+
+    await flushPromises();
+
+    // Make dirty
+    await group.setValue({ a: 'changed' });
+    expect(group.dirty).toBe(true);
+
+    // Reset
+    await group.reset();
+
+    expect(group.value).toEqual({ a: 'initial' });
+    expect(group.dirty).toBe(false);
+  });
+
+  it('Should propagate dirty state correctly in Nested Groups', async () => {
+    // Structure: Root -> ChildGroup -> Field
+    const group = createGroup({
+      formId: 'root',
+      formType: 'group',
+      fields: [
+        {
+          formId: 'childGroup',
+          formType: 'group',
+          fields: [
+            {
+              formId: 'leaf',
+              formType: 'field',
+              value: 'initial'
+            }
+          ]
+        }
+      ]
+    });
+
+    await flushPromises();
+
+    const childGroup = group.$childGroup;
+    const leafField = group.$childGroup.$leaf;
+
+    expect(group.dirty).toBe(false);
+
+    // Change the deepest field
+    await leafField.setValue('changed');
+
+    expect(leafField.dirty).toBe(true);
+    expect(childGroup.dirty).toBe(true); // Parent should be dirty
+    expect(group.dirty).toBe(true); // Grandparent should be dirty
+  });
+
+  it('Reactivity: should automatically update UI when adding/removing fields', async () => {
+    // 1. Setup Formily
+    const formily = createFormily();
+
+    // 2. Define initial schema
+    const schema = defineSchema({
+      formId: 'test',
+      formType: 'group',
       fields: [
         {
           formId: 'a',
@@ -653,13 +828,140 @@ describe('Group', () => {
       ]
     });
 
-    group.addField({
+    type TestForm = FormInstance<typeof schema>;
+
+    // 3. Mount Component
+    // Strategy: Render the actual state (field list & value).
+    // This ensures Vue tracks the 'fields' array dependency.
+    const wrapper = mount(
+      {
+        render() {
+          const form = (this as any).$formily.getForm('test');
+
+          if (!form) return null;
+
+          return h('div', { id: 'test' }, [
+            // Render the count of fields
+            h('div', { id: 'count' }, `Count: ${form.fields.length}`),
+
+            // Render the list of formIds.
+            // This map function creates the dependency on the 'fields' array.
+            h('div', { id: 'ids' }, form.fields.map((f: any) => f.formId).join(', ')),
+
+            // Render the current form value to check data binding
+            h('div', { id: 'value' }, JSON.stringify(form.value))
+          ]);
+        }
+      },
+      {
+        global: {
+          plugins: [formily]
+        }
+      }
+    );
+
+    // Initialize form
+    wrapper.vm.$formily.addForm(schema);
+    await flushPromises();
+
+    const testForm = wrapper.vm.forms.test as unknown as TestForm;
+
+    // --- CASE 1: Initial State ---
+    // Should have 1 field 'a'
+    expect(getContent(wrapper, '#count')).toBe('Count: 1');
+    expect(getContent(wrapper, '#ids')).toBe('a');
+
+    // --- CASE 2: Add Fields & Set Value ---
+
+    // Add field 'b' (appended to end)
+    await testForm.addField({
       formId: 'b',
       formType: 'field'
     });
 
-    expect(JSON.stringify(group.schema)).toBe(
-      '{"formId":"group_test","formType":"group","rules":[{"name":"required","message":"test"},{"name":"test","cascade":true}],"fields":[{"formId":"a","formType":"field"},{"formId":"b","formType":"field"}]}'
+    // Add group 'c' (inserted at index 0)
+    const cField = await testForm.addField(
+      {
+        formId: 'c',
+        formType: 'group',
+        fields: [
+          {
+            formId: 'd',
+            formType: 'field'
+          }
+        ]
+      },
+      {
+        at: 0
+      }
     );
+
+    // Set form values
+    const value = {
+      a: '1',
+      b: '2',
+      c: {
+        d: '2'
+      }
+    };
+
+    await testForm.setValue(value);
+    await flushPromises(); // Wait for Vue to re-render
+
+    // Assertions:
+    // 1. Count should be 3
+    expect(getContent(wrapper, '#count')).toBe('Count: 3');
+
+    // 2. Order should be c (index 0), a (original), b (appended)
+    expect(getContent(wrapper, '#ids')).toBe('c, a, b');
+
+    // 3. Value should match
+    const domValue = JSON.parse(getContent(wrapper, '#value'));
+    expect(domValue).toEqual(value);
+
+    // 4. Verify internal model consistency
+    expect(testForm.fields[0].formId).toBe('c');
+    expect(testForm.value).toEqual(value);
+
+    // --- CASE 3: Remove Fields ---
+
+    await testForm.removeField('b');
+    await testForm.removeField(cField); // Remove by instance
+    await flushPromises();
+
+    // Assertions:
+    // Should revert to having only field 'a'
+    expect(getContent(wrapper, '#count')).toBe('Count: 1');
+    expect(getContent(wrapper, '#ids')).toBe('a');
+    expect(testForm.value).toEqual({
+      a: '1'
+    });
+  });
+
+  it('should call both config `on` handler and schema `on` handler (additive, not override)', async () => {
+    const configHandler = vi.fn();
+    const schemaHandler = vi.fn();
+
+    const group = new Group(
+      defineGroup({
+        formId: 'test',
+        fields: [{ formId: 'a', formType: 'field', value: '1' }],
+        on: { updated: schemaHandler }
+      }) as any,
+      {
+        elements: [Field, Group, Collection],
+        on: { updated: configHandler }
+      }
+    );
+
+    await flushPromises();
+
+    // Change field value to trigger 'updated' event on the group
+    await (group as any).$a.setValue('changed');
+    await flushPromises();
+
+    // Both handlers must be called — neither should override the other
+    expect(configHandler).toHaveBeenCalled();
+    expect(schemaHandler).toHaveBeenCalled();
   });
 });
